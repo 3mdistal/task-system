@@ -13,7 +13,7 @@ import {
 } from "./utils/calculationUtils";
 
 // Define your tasks and milestones here
-const tasks: Task[] = [
+export const tasks: Task[] = [
   {
     name: "Design user interface mockups",
     duration: 4.5,
@@ -116,7 +116,7 @@ const tasks: Task[] = [
   },
 ];
 
-const milestones: Milestone[] = [
+export const milestones: Milestone[] = [
   {
     name: "Frontend Redesign",
     viability: 4,
@@ -164,6 +164,7 @@ const milestones: Milestone[] = [
     viability: 3,
     excitement: 3,
     project: "Infrastructure Upgrade",
+    soft_deadline: "2025-01-15",
   },
   {
     name: "Backend Development",
@@ -176,6 +177,7 @@ const milestones: Milestone[] = [
     name: "Feature Enhancements",
     viability: 3,
     excitement: 4,
+    hard_deadline: "2024-11-15",
     project: "Website Overhaul",
   },
 ];

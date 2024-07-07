@@ -1,5 +1,6 @@
 import { Task, Milestone } from "../types";
 import { getHoursUntilDeadline } from "./dateUtils";
+import { tasks } from "../index";
 
 export const calculateTotalDuration = (tasks: Task[]): number =>
   tasks.reduce((total, task) => total + task.duration, 0);
@@ -8,9 +9,12 @@ export const calculateDeadlineRatio = (
   milestone: Milestone,
   date: Date
 ): number => {
-  const duration = calculateTotalDuration(getTasksForMilestone(milestone));
+  const milestoneTasks = getTasksForMilestone(milestone);
+  const duration = calculateTotalDuration(milestoneTasks);
   const hours = getHoursUntilDeadline(milestone, date);
-  return hours === 0 ? 0 : hours / duration;
+
+  if (duration === 0) return 0;
+  return hours / duration;
 };
 
 export const isDeadlineMeetable = (milestone: Milestone, date: Date): boolean =>
@@ -19,8 +23,3 @@ export const isDeadlineMeetable = (milestone: Milestone, date: Date): boolean =>
 
 export const getTasksForMilestone = (milestone: Milestone): Task[] =>
   tasks.filter((task) => task.milestone === milestone.name);
-
-// You'll need to import or define your tasks array here
-const tasks: Task[] = [
-  // ... your tasks here
-];

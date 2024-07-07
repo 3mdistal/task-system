@@ -10,15 +10,42 @@ export const getDaysUntilDeadline = (
   const deadline = new Date(
     milestone.hard_deadline || milestone.soft_deadline || ""
   );
-  return isNaN(deadline.getTime())
-    ? Number.MAX_SAFE_INTEGER
-    : Math.ceil((deadline.getTime() - currentDate.getTime()) / MS_PER_DAY);
+  if (isNaN(deadline.getTime())) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const diffTime = deadline.getTime() - currentDate.getTime();
+  const diffDays = diffTime / MS_PER_DAY;
+
+  // If the difference is less than one day and positive, return 0
+  if (diffDays > 0 && diffDays < 1) {
+    return 0;
+  }
+
+  return Math.floor(diffDays);
 };
 
 export const getHoursUntilDeadline = (
   milestone: Milestone,
-  date: Date
-): number => getDaysUntilDeadline(milestone, date) * USABLE_HOURS_PER_DAY;
+  date: Date = new Date()
+): number => {
+  const deadline = new Date(
+    milestone.hard_deadline || milestone.soft_deadline || ""
+  );
+  if (isNaN(deadline.getTime())) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const diffTime = deadline.getTime() - date.getTime();
+  const diffHours = diffTime / (1000 * 60 * 60);
+
+  // If the difference is less than one day and positive, return 0
+  if (diffHours > 0 && diffHours < 24) {
+    return 0;
+  }
+
+  return Math.floor(diffHours * (USABLE_HOURS_PER_DAY / 24));
+};
 
 export const addDays = (
   duration: number,

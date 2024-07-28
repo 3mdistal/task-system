@@ -25,7 +25,7 @@ export const calculateDeadlineRatio = (
   const hours = getHoursUntilDeadline(project, date);
 
   if (duration === 0) return 0;
-  return hours / duration;
+  return hours / duration; // todo: make the ratio approach 1 (100% busy) instead of what it currently is
 };
 
 export const isDeadlineMeetable = (project: Project, date: Date): boolean => {

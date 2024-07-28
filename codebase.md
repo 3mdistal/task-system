@@ -55,13 +55,16 @@ module.exports = {
 # src/index.ts
 
 ```ts
-import { Milestone, Task } from "./types";
+import { Project } from "./types";
 import { optimizeSequence } from "./services/optimizationService";
 import { simulateSequence } from "./services/simulationService";
+import { projects } from "./data/data";
 
-export function optimizeTasks(tasks: Task[], milestones: Milestone[]) {
-  const bestSequence = optimizeSequence(milestones);
+export function optimizeTasks(projects: Project[]) {
+  const bestSequence = optimizeSequence(projects);
   const result = simulateSequence(bestSequence);
+
+  console.log(bestSequence, result);
 
   return {
     optimizedSequence: bestSequence,
@@ -69,12 +72,14 @@ export function optimizeTasks(tasks: Task[], milestones: Milestone[]) {
   };
 }
 
+optimizeTasks(projects);
+
 ```
 
 # tests/utils/dateUtils.test.ts
 
 ```ts
-import { Milestone } from "../../src/types";
+import { Project } from "../../src/types";
 import {
   MS_PER_DAY,
   USABLE_HOURS_PER_DAY,
@@ -83,109 +88,106 @@ import {
   addDays,
 } from "../../src/utils/dateUtils";
 
-describe("Milestone Utility Functions", () => {
-  const baseMilestone: Milestone = {
-    name: "Test Milestone",
+describe("Project Utility Functions", () => {
+  const baseProject: Project = {
+    name: "Test Project",
     viability: 1,
     excitement: 1,
-    project: "Test Project",
+    deadlineType: "hard",
+    goal: {
+      name: "Test Goal",
+      projects: () => [],
+      status: "planned",
+    },
+    milestones: () => [],
+    status: "planned",
   };
 
   describe("getDaysUntilDeadline", () => {
     it("should return correct number of days for a future hard deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-10T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-10T00:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getDaysUntilDeadline(milestone, currentDate)).toBe(3);
+      expect(getDaysUntilDeadline(project, currentDate)).toBe(3);
     });
 
     it("should return correct number of days for a future soft deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        soft_deadline: "2024-07-10T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-10T00:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getDaysUntilDeadline(milestone, currentDate)).toBe(3);
-    });
-
-    it("should prioritize hard deadline over soft deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-10T00:00:00Z",
-        soft_deadline: "2024-07-15T00:00:00Z",
-      };
-      const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getDaysUntilDeadline(milestone, currentDate)).toBe(3);
+      expect(getDaysUntilDeadline(project, currentDate)).toBe(3);
     });
 
     it("should return MAX_SAFE_INTEGER for invalid date", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "invalid date",
+      const project: Project = {
+        ...baseProject,
+        deadline: undefined,
       };
-      expect(getDaysUntilDeadline(milestone)).toBe(Number.MAX_SAFE_INTEGER);
+      expect(getDaysUntilDeadline(project)).toBe(Number.MAX_SAFE_INTEGER);
     });
 
     it("should return 0 for a deadline that's today", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-07T12:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-07T12:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getDaysUntilDeadline(milestone, currentDate)).toBe(0);
+      expect(getDaysUntilDeadline(project, currentDate)).toBe(0);
     });
 
     it("should return negative days for a past deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-05T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-05T00:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getDaysUntilDeadline(milestone, currentDate)).toBe(-2);
+      expect(getDaysUntilDeadline(project, currentDate)).toBe(-2);
     });
 
     it("should use current date when not provided", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-10T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-10T00:00:00Z"),
       };
       const mockDate = new Date("2024-07-07T00:00:00Z");
       jest.useFakeTimers().setSystemTime(mockDate);
-      expect(getDaysUntilDeadline(milestone)).toBe(3);
+      expect(getDaysUntilDeadline(project)).toBe(3);
       jest.useRealTimers();
     });
   });
 
   describe("getHoursUntilDeadline", () => {
     it("should return correct number of hours until deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-10T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-10T00:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getHoursUntilDeadline(milestone, currentDate)).toBe(
+      expect(getHoursUntilDeadline(project, currentDate)).toBe(
         3 * USABLE_HOURS_PER_DAY
       ); // 3 days * 3 usable hours
     });
 
     it("should return 0 hours for a deadline that's today", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-07T12:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-07T12:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getHoursUntilDeadline(milestone, currentDate)).toBe(0);
+      expect(getHoursUntilDeadline(project, currentDate)).toBe(0);
     });
 
     it("should return negative hours for a past deadline", () => {
-      const milestone: Milestone = {
-        ...baseMilestone,
-        hard_deadline: "2024-07-05T00:00:00Z",
+      const project: Project = {
+        ...baseProject,
+        deadline: new Date("2024-07-05T00:00:00Z"),
       };
       const currentDate = new Date("2024-07-07T00:00:00Z");
-      expect(getHoursUntilDeadline(milestone, currentDate)).toBe(
+      expect(getHoursUntilDeadline(project, currentDate)).toBe(
         -2 * USABLE_HOURS_PER_DAY
       ); // -2 days * 3 usable hours
     });
@@ -227,332 +229,6 @@ describe("Milestone Utility Functions", () => {
     });
   });
 });
-
-```
-
-# tests/utils/calculationUtils.test.ts
-
-```ts
-import { Task, Milestone } from "../../src/types";
-import { getHoursUntilDeadline } from "../../src/utils/dateUtils";
-import { tasks } from "../../src/index";
-import * as calculationUtils from "../../src/utils/calculationUtils";
-
-// Mock the imported modules
-jest.mock("../../src/utils/dateUtils");
-jest.mock("../../src/index", () => ({
-  tasks: [
-    { name: "Task 1", duration: 4, milestone: "Milestone 1" },
-    { name: "Task 2", duration: 6, milestone: "Milestone 1" },
-    { name: "Task 3", duration: 3, milestone: "Milestone 2" },
-    { name: "Task 4", duration: 5, milestone: "Milestone 2" },
-    { name: "Task 5", duration: 2, milestone: "Milestone 3" },
-  ],
-}));
-
-describe("Project Management Utilities", () => {
-  beforeEach(() => {
-    jest.spyOn(calculationUtils, "getTasksForMilestone");
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  describe("calculateTotalDuration", () => {
-    it("should correctly calculate total duration for given tasks", () => {
-      const testTasks: Task[] = [
-        { name: "Task 1", duration: 4 },
-        { name: "Task 2", duration: 6 },
-        { name: "Task 3", duration: 3 },
-      ];
-      expect(calculationUtils.calculateTotalDuration(testTasks)).toBe(13);
-    });
-
-    it("should return 0 for an empty task list", () => {
-      expect(calculationUtils.calculateTotalDuration([])).toBe(0);
-    });
-  });
-
-  describe("calculateDeadlineRatio", () => {
-    const mockMilestone: Milestone = {
-      name: "Test Milestone",
-      viability: 0.8,
-      excitement: 0.7,
-      project: "Test Project",
-    };
-
-    beforeEach(() => {
-      (getHoursUntilDeadline as jest.Mock).mockClear();
-    });
-
-    it("should calculate correct ratio when hours > duration", () => {
-      (getHoursUntilDeadline as jest.Mock).mockReturnValue(20);
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([
-        { name: "Task 1", duration: 5 },
-        { name: "Task 2", duration: 5 },
-      ]);
-      const result = calculationUtils.calculateDeadlineRatio(
-        mockMilestone,
-        new Date()
-      );
-      expect(result).toBe(2); // 20 hours / 10 hours duration
-    });
-
-    it("should calculate correct ratio when hours < duration", () => {
-      (getHoursUntilDeadline as jest.Mock).mockReturnValue(5);
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([
-        { name: "Task 1", duration: 5 },
-        { name: "Task 2", duration: 5 },
-      ]);
-      const result = calculationUtils.calculateDeadlineRatio(
-        mockMilestone,
-        new Date()
-      );
-      expect(result).toBe(0.5); // 5 hours / 10 hours duration
-    });
-
-    it("should return 0 when hours until deadline is 0", () => {
-      (getHoursUntilDeadline as jest.Mock).mockReturnValue(0);
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([
-        { name: "Task 1", duration: 5 },
-        { name: "Task 2", duration: 5 },
-      ]);
-      const result = calculationUtils.calculateDeadlineRatio(
-        mockMilestone,
-        new Date()
-      );
-      expect(result).toBe(0);
-    });
-
-    it("should return 0 when there are no tasks", () => {
-      (getHoursUntilDeadline as jest.Mock).mockReturnValue(10);
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([]);
-      const result = calculationUtils.calculateDeadlineRatio(
-        mockMilestone,
-        new Date()
-      );
-      expect(result).toBe(0);
-    });
-  });
-
-  describe("isDeadlineMeetable", () => {
-    const mockDate = new Date("2024-07-07");
-
-    beforeEach(() => {
-      jest.spyOn(calculationUtils, "calculateDeadlineRatio");
-    });
-
-    it("should return true when no deadlines are set", () => {
-      const milestone: Milestone = {
-        name: "No Deadline",
-        viability: 0.8,
-        excitement: 0.7,
-        project: "Test Project",
-      };
-      expect(calculationUtils.isDeadlineMeetable(milestone, mockDate)).toBe(
-        true
-      );
-    });
-
-    it("should return true when ratio >= 1", () => {
-      const milestone: Milestone = {
-        name: "Meetable Deadline",
-        viability: 0.8,
-        excitement: 0.7,
-        project: "Test Project",
-        soft_deadline: "2024-07-20",
-      };
-      (calculationUtils.calculateDeadlineRatio as jest.Mock).mockReturnValue(
-        1.5
-      );
-      expect(calculationUtils.isDeadlineMeetable(milestone, mockDate)).toBe(
-        true
-      );
-    });
-
-    it("should return false when ratio < 1", () => {
-      const milestone: Milestone = {
-        name: "Unmeetable Deadline",
-        viability: 0.8,
-        excitement: 0.7,
-        project: "Test Project",
-        hard_deadline: "2024-07-10",
-      };
-      (calculationUtils.calculateDeadlineRatio as jest.Mock).mockReturnValue(
-        0.5
-      );
-      expect(calculationUtils.isDeadlineMeetable(milestone, mockDate)).toBe(
-        false
-      );
-    });
-  });
-
-  describe("getTasksForMilestone", () => {
-    it("should return correct tasks for a given milestone", () => {
-      const milestone: Milestone = {
-        name: "Milestone 1",
-        viability: 0.8,
-        excitement: 0.7,
-        project: "Test Project",
-      };
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([
-        { name: "Task 1", duration: 4, milestone: "Milestone 1" },
-        { name: "Task 2", duration: 6, milestone: "Milestone 1" },
-      ]);
-      const result = calculationUtils.getTasksForMilestone(milestone);
-      expect(result).toHaveLength(2);
-      expect(result[0].name).toBe("Task 1");
-      expect(result[1].name).toBe("Task 2");
-    });
-
-    it("should return an empty array for a milestone with no tasks", () => {
-      const milestone: Milestone = {
-        name: "Non-existent Milestone",
-        viability: 0.8,
-        excitement: 0.7,
-        project: "Test Project",
-      };
-      (calculationUtils.getTasksForMilestone as jest.Mock).mockReturnValue([]);
-      const result = calculationUtils.getTasksForMilestone(milestone);
-      expect(result).toHaveLength(0);
-    });
-  });
-});
-
-```
-
-# src/utils/dateUtils.ts
-
-```ts
-import { Milestone } from "../types";
-
-export const MS_PER_DAY = 1000 * 60 * 60 * 24;
-export const USABLE_HOURS_PER_DAY = 3;
-
-export const getDaysUntilDeadline = (
-  milestone: Milestone,
-  currentDate: Date = new Date()
-): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const diffTime = deadline.getTime() - currentDate.getTime();
-  const diffDays = diffTime / MS_PER_DAY;
-
-  // If the difference is less than one day and positive, return 0
-  if (diffDays > 0 && diffDays < 1) {
-    return 0;
-  }
-
-  return Math.floor(diffDays);
-};
-
-export const getHoursUntilDeadline = (
-  milestone: Milestone,
-  date: Date = new Date()
-): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const diffTime = deadline.getTime() - date.getTime();
-  const diffHours = diffTime / (1000 * 60 * 60);
-
-  // If the difference is less than one day and positive, return 0
-  if (diffHours > 0 && diffHours < 24) {
-    return 0;
-  }
-
-  return Math.floor(diffHours * (USABLE_HOURS_PER_DAY / 24));
-};
-
-export const addDays = (
-  duration: number,
-  currentDate: Date
-): { date: Date; hoursUsed: number } => {
-  const daysToAdd = Math.floor(duration / USABLE_HOURS_PER_DAY);
-  const newDate = new Date(currentDate);
-  newDate.setDate(newDate.getDate() + daysToAdd);
-  return {
-    date: newDate,
-    hoursUsed: duration % USABLE_HOURS_PER_DAY,
-  };
-};
-
-```
-
-# src/utils/calculationUtils.ts
-
-```ts
-import { Task, Milestone } from "../types";
-import { getHoursUntilDeadline } from "./dateUtils";
-import { tasks } from "../index";
-
-export const calculateTotalDuration = (tasks: Task[]): number =>
-  tasks.reduce((total, task) => total + task.duration, 0);
-
-export const calculateDeadlineRatio = (
-  milestone: Milestone,
-  date: Date
-): number => {
-  const milestoneTasks = getTasksForMilestone(milestone);
-  const duration = calculateTotalDuration(milestoneTasks);
-  const hours = getHoursUntilDeadline(milestone, date);
-
-  if (duration === 0) return 0;
-  return hours / duration;
-};
-
-export const isDeadlineMeetable = (milestone: Milestone, date: Date): boolean =>
-  (!milestone.hard_deadline && !milestone.soft_deadline) ||
-  calculateDeadlineRatio(milestone, date) >= 1;
-
-export const getTasksForMilestone = (milestone: Milestone): Task[] =>
-  tasks.filter((task) => task.milestone === milestone.name);
-
-```
-
-# src/utils/arrayUtils.ts
-
-```ts
-export function* generatePermutations<T>(array: T[]): Generator<T[]> {
-  const n = array.length;
-  const c = new Array(n).fill(0);
-  yield [...array];
-
-  let i = 1;
-  while (i < n) {
-    if (c[i] < i) {
-      const swapIndex = i % 2 === 0 ? 0 : c[i];
-      [array[i], array[swapIndex]] = [array[swapIndex], array[i]];
-      yield [...array];
-      c[i]++;
-      i = 1;
-    } else {
-      c[i] = 0;
-      i++;
-    }
-  }
-}
-
-export const shuffleArray = <T>(array: T[]): T[] => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
-
-export const getAllShuffledPermutations = <T>(array: T[]): T[][] =>
-  shuffleArray(Array.from(generatePermutations(array)));
 
 ```
 
@@ -602,12 +278,12 @@ export type Status =
 # src/types/SimulationResult.ts
 
 ```ts
-import { MilestoneResult } from "./index";
+import { ProjectResult } from "./index";
 
 export interface SimulationResult {
   totalDaysLate: number;
-  milestonesLate: MilestoneResult[];
-  milestonesEarly: MilestoneResult[];
+  projectsLate: ProjectResult[];
+  projectsEarly: ProjectResult[];
   totalDuration: number;
   weightedAverageRatio: number;
   projectEndDate: Date;
@@ -618,14 +294,17 @@ export interface SimulationResult {
 # src/types/Project.ts
 
 ```ts
-import { Goal, Status } from "./";
+import { Goal, Milestone, Status } from "./";
 
 export interface Project {
-  deadline: Date;
-  deadlineType: "soft" | "hard";
+  deadline?: Date;
+  deadlineType?: "soft" | "hard";
+  excitement: 1 | 2 | 3 | 4 | 5;
   goal: Goal;
+  milestones: () => Milestone[];
   name: string;
   status: Status;
+  viability: 1 | 2 | 3 | 4 | 5;
 }
 
 ```
@@ -633,10 +312,10 @@ export interface Project {
 # src/types/MilestoneResult.ts
 
 ```ts
-import { Milestone } from "./index";
+import { Project } from "./index";
 
-export interface MilestoneResult {
-  milestone: Milestone;
+export interface ProjectResult {
+  project: Project;
   index: number;
   daysLate?: number;
   daysEarly?: number;
@@ -655,6 +334,7 @@ export interface Milestone {
   name: string;
   project: Project;
   status: Status;
+  tasks: () => Task[];
 }
 
 ```
@@ -662,79 +342,63 @@ export interface Milestone {
 # src/types/Goal.ts
 
 ```ts
-import { Status } from "./";
+import { Project, Status } from "./";
 
 export interface Goal {
+  name: string;
+  projects: () => Project[];
   status: Status;
 }
-
-```
-
-# src/data/data.ts
-
-```ts
 
 ```
 
 # src/services/simulationService.ts
 
 ```ts
-import { Milestone, MilestoneResult, SimulationResult } from "../types";
-import { MS_PER_DAY, USABLE_HOURS_PER_DAY, addDays } from "../utils/dateUtils";
-import {
-  calculateTotalDuration,
-  getTasksForMilestone,
-} from "../utils/calculationUtils";
+import { Project, ProjectResult, SimulationResult } from "../types";
+import { MS_PER_DAY } from "../utils/dateUtils";
+import { calculateProjectDuration } from "../utils/calculationUtils";
 
-export const simulateSequence = (milestones: Milestone[]): SimulationResult => {
+export const simulateSequence = (projects: Project[]): SimulationResult => {
   let currentDate = new Date();
   let totalDaysLate = 0;
-  let milestonesLate: MilestoneResult[] = [];
-  let milestonesEarly: MilestoneResult[] = [];
+  let projectsLate: ProjectResult[] = [];
+  let projectsEarly: ProjectResult[] = [];
   let totalDuration = 0;
   let totalWeightedRatio = 0;
 
-  milestones.forEach((milestone, index) => {
-    const milestoneDuration = calculateTotalDuration(
-      getTasksForMilestone(milestone)
-    );
-    totalDuration += milestoneDuration;
+  projects.forEach((project, index) => {
+    const projectDuration = calculateProjectDuration(project);
+    totalDuration += projectDuration;
 
-    const deadline = new Date(
-      milestone.hard_deadline || milestone.soft_deadline || ""
-    );
+    const { deadline } = project;
 
-    if (!isNaN(deadline.getTime())) {
+    if (!deadline) {
+      totalWeightedRatio += projectDuration;
+      currentDate = new Date(
+        currentDate.getTime() + projectDuration * MS_PER_DAY
+      );
+    } else {
       const timeUntilDeadline = Math.max(
         0,
         deadline.getTime() - currentDate.getTime()
       );
-      const timeNeeded =
-        (milestoneDuration * MS_PER_DAY) / USABLE_HOURS_PER_DAY;
-
+      const timeNeeded = projectDuration * MS_PER_DAY;
       let ratio = timeUntilDeadline / timeNeeded;
-      totalWeightedRatio += ratio * milestoneDuration;
-
+      totalWeightedRatio += ratio * projectDuration;
       if (timeNeeded > timeUntilDeadline) {
         const daysLate = Math.ceil(
           (timeNeeded - timeUntilDeadline) / MS_PER_DAY
         );
         totalDaysLate += daysLate;
-        milestonesLate.push({ milestone, index, daysLate });
+        projectsLate.push({ project, index, daysLate });
         currentDate = new Date(currentDate.getTime() + timeNeeded);
       } else {
         const daysEarly = Math.floor(
           (timeUntilDeadline - timeNeeded) / MS_PER_DAY
         );
-        milestonesEarly.push({ milestone, index, daysEarly });
-        currentDate = new Date(deadline.getTime());
+        projectsEarly.push({ project, index, daysEarly });
       }
-    } else {
-      totalWeightedRatio += milestoneDuration;
-      currentDate = new Date(
-        currentDate.getTime() +
-          (milestoneDuration * MS_PER_DAY) / USABLE_HOURS_PER_DAY
-      );
     }
   });
 
@@ -743,8 +407,8 @@ export const simulateSequence = (milestones: Milestone[]): SimulationResult => {
 
   return {
     totalDaysLate,
-    milestonesLate,
-    milestonesEarly,
+    projectsLate,
+    projectsEarly,
     totalDuration,
     weightedAverageRatio,
     projectEndDate: currentDate,
@@ -756,13 +420,13 @@ export const simulateSequence = (milestones: Milestone[]): SimulationResult => {
 # src/services/optimizationService.ts
 
 ```ts
-import { Milestone } from "../types";
+import { Project } from "../types";
 import { getAllShuffledPermutations } from "../utils/arrayUtils";
 import { simulateSequence } from "./simulationService";
 
-export const optimizeSequence = (testSequence: Milestone[]): Milestone[] => {
+export const optimizeSequence = (testSequence: Project[]): Project[] => {
   let bestSequences: Array<{
-    sequence: Milestone[];
+    sequence: Project[];
     weightedAverageRatio: number;
   }> = [];
   let lowestDaysLate = Number.MAX_SAFE_INTEGER;
@@ -788,6 +452,343 @@ export const optimizeSequence = (testSequence: Milestone[]): Milestone[] => {
     current.weightedAverageRatio > best.weightedAverageRatio ? current : best
   ).sequence;
 };
+
+```
+
+# src/data/data.ts
+
+```ts
+// src/data/data.ts
+
+import { Goal, Project, Milestone, Task } from "../types";
+import {
+  getMilestonesForProject,
+  getProjectsForGoal,
+  getTasksForMilestone,
+} from "../utils/calculationUtils";
+
+// Goals
+export const goals: Goal[] = [
+  {
+    name: "Be a better developer.",
+    projects: () => getProjectsForGoal(goals[0], projects),
+    status: "in-flight",
+  },
+];
+
+// Projects
+export const projects: Project[] = [
+  {
+    name: "Website Redesign",
+    deadline: new Date("2024-12-31"),
+    deadlineType: "soft",
+    excitement: 5,
+    goal: goals[0],
+    milestones: () => getMilestonesForProject(projects[0], milestones),
+    status: "in-flight",
+    viability: 4,
+  },
+  {
+    name: "Mobile App Development",
+    deadline: new Date("2025-06-30"),
+    deadlineType: "hard",
+    excitement: 3,
+    goal: goals[0],
+    milestones: () => getMilestonesForProject(projects[1], milestones),
+    status: "planned",
+    viability: 5,
+  },
+];
+
+// Milestones
+export const milestones: Milestone[] = [
+  {
+    name: "Design Phase",
+    project: projects[0],
+    status: "in-flight",
+    dependencies: [],
+    tasks: () => getTasksForMilestone(milestones[0], tasks),
+  },
+  {
+    name: "Frontend Development",
+    project: projects[0],
+    status: "planned",
+    dependencies: [],
+    tasks: () => getTasksForMilestone(milestones[1], tasks),
+  },
+  {
+    name: "Backend Integration",
+    project: projects[0],
+    status: "planned",
+    dependencies: [],
+    tasks: () => getTasksForMilestone(milestones[2], tasks),
+  },
+  {
+    name: "App Wireframing",
+    project: projects[1],
+    status: "planned",
+    dependencies: [],
+    tasks: () => getTasksForMilestone(milestones[3], tasks),
+  },
+  {
+    name: "Core Functionality",
+    project: projects[1],
+    status: "planned",
+    dependencies: [],
+    tasks: () => getTasksForMilestone(milestones[4], tasks),
+  },
+];
+
+// Tasks
+export const tasks: Task[] = [
+  {
+    name: "Create mood board",
+    duration: 4,
+    timeSpent: 2,
+    status: "in-flight",
+    milestone: milestones[0],
+    dependencies: [],
+  },
+  {
+    name: "Design homepage mockup",
+    duration: 8,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[0],
+    dependencies: [],
+  },
+  {
+    name: "Implement responsive layout",
+    duration: 16,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[1],
+    dependencies: [],
+  },
+  {
+    name: "Develop navigation component",
+    duration: 12,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[1],
+    dependencies: [],
+  },
+  {
+    name: "Set up API endpoints",
+    duration: 20,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[2],
+    dependencies: [],
+  },
+  {
+    name: "Implement authentication",
+    duration: 24,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[2],
+    dependencies: [],
+  },
+  {
+    name: "Create app screens sketch",
+    duration: 10,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[3],
+    dependencies: [],
+  },
+  {
+    name: "Design user flow diagrams",
+    duration: 8,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[3],
+    dependencies: [],
+  },
+  {
+    name: "Implement login functionality",
+    duration: 15,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[4],
+    dependencies: [],
+  },
+  {
+    name: "Develop data synchronization",
+    duration: 25 + 300,
+    timeSpent: 0,
+    status: "planned",
+    milestone: milestones[4],
+    dependencies: [],
+  },
+];
+
+// Set up dependencies
+milestones[1].dependencies.push(milestones[0]);
+milestones[2].dependencies.push(milestones[1]);
+milestones[4].dependencies.push(milestones[3]);
+
+tasks[1].dependencies.push(tasks[0]);
+tasks[3].dependencies.push(tasks[2]);
+tasks[5].dependencies.push(tasks[4]);
+tasks[7].dependencies.push(tasks[6]);
+tasks[9].dependencies.push(tasks[8]);
+
+```
+
+# src/utils/dateUtils.ts
+
+```ts
+import type { Project } from "../types";
+
+export const MS_PER_DAY = 1000 * 60 * 60 * 24;
+export const USABLE_HOURS_PER_DAY = 3;
+
+export const getDaysUntilDeadline = (
+  project: Project,
+  currentDate: Date = new Date()
+): number => {
+  const { deadline } = project;
+
+  if (!deadline) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const diffTime = deadline.getTime() - currentDate.getTime();
+  const diffDays = diffTime / MS_PER_DAY;
+
+  // If the difference is less than one day and positive, return 0
+  if (diffDays > 0 && diffDays < 1) {
+    return 0;
+  }
+
+  return Math.floor(diffDays);
+};
+
+export const getHoursUntilDeadline = (
+  project: Project,
+  date: Date = new Date()
+): number => {
+  const { deadline } = project;
+  if (!deadline) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const diffTime = deadline.getTime() - date.getTime();
+  const diffHours = diffTime / (1000 * 60 * 60);
+
+  // If the difference is less than one day and positive, return 0
+  if (diffHours > 0 && diffHours < 24) {
+    return 0;
+  }
+
+  return Math.floor(diffHours * (USABLE_HOURS_PER_DAY / 24));
+};
+
+export const addDays = (
+  duration: number,
+  currentDate: Date
+): { date: Date; hoursUsed: number } => {
+  const daysToAdd = Math.floor(duration / USABLE_HOURS_PER_DAY);
+  const newDate = new Date(currentDate);
+  newDate.setDate(newDate.getDate() + daysToAdd);
+  return {
+    date: newDate,
+    hoursUsed: duration % USABLE_HOURS_PER_DAY,
+  };
+};
+
+```
+
+# src/utils/calculationUtils.ts
+
+```ts
+import { Task, Milestone, Project, Goal } from "../types";
+import { getHoursUntilDeadline } from "./dateUtils";
+
+export const calculateTasksDuration = (tasks: Task[]): number =>
+  tasks.reduce((total, task) => total + task.duration, 0);
+
+export const calculateMilestoneDuration = (milestone: Milestone): number =>
+  calculateTasksDuration(milestone.tasks());
+
+export const calculateProjectDuration = (project: Project): number =>
+  project
+    .milestones()
+    .reduce(
+      (total, milestone) => total + calculateMilestoneDuration(milestone),
+      0
+    );
+
+export const calculateDeadlineRatio = (
+  project: Project,
+  date: Date
+): number => {
+  if (project.milestones().length === 0) return 0;
+
+  const duration = calculateProjectDuration(project);
+  const hours = getHoursUntilDeadline(project, date);
+
+  if (duration === 0) return 0;
+  return hours / duration; // todo: make the ratio approach 1 (100% busy) instead of what it currently is
+};
+
+export const isDeadlineMeetable = (project: Project, date: Date): boolean => {
+  if (!project.deadline) return true;
+  return calculateDeadlineRatio(project, date) >= 1;
+};
+
+export const getTasksForMilestone = (
+  milestone: Milestone,
+  allTasks: Task[]
+): Task[] => allTasks.filter((task) => task.milestone === milestone);
+
+export const getMilestonesForProject = (
+  project: Project,
+  allMilestones: Milestone[]
+): Milestone[] =>
+  allMilestones.filter((milestone) => milestone.project === project);
+
+export const getProjectsForGoal = (
+  goal: Goal,
+  allProjects: Project[]
+): Project[] => allProjects.filter((project) => project.goal === goal);
+
+```
+
+# src/utils/arrayUtils.ts
+
+```ts
+export function* generatePermutations<T>(array: T[]): Generator<T[]> {
+  const n = array.length;
+  const c = new Array(n).fill(0);
+  yield [...array];
+
+  let i = 1;
+  while (i < n) {
+    if (c[i] < i) {
+      const swapIndex = i % 2 === 0 ? 0 : c[i];
+      [array[i], array[swapIndex]] = [array[swapIndex], array[i]];
+      yield [...array];
+      c[i]++;
+      i = 1;
+    } else {
+      c[i] = 0;
+      i++;
+    }
+  }
+}
+
+export const shuffleArray = <T>(array: T[]): T[] => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+export const getAllShuffledPermutations = <T>(array: T[]): T[][] =>
+  shuffleArray(Array.from(generatePermutations(array)));
 
 ```
 

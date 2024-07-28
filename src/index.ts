@@ -1,9 +1,9 @@
-import { Milestone, Task } from "./types";
+import { Project } from "./types";
 import { optimizeSequence } from "./services/optimizationService";
 import { simulateSequence } from "./services/simulationService";
 
-export function optimizeTasks(tasks: Task[], milestones: Milestone[]) {
-  const bestSequence = optimizeSequence(milestones);
+export function optimizeTasks(projects: Project[]) {
+  const bestSequence = optimizeSequence(projects);
   const result = simulateSequence(bestSequence);
 
   return {

@@ -1,10 +1,10 @@
-import { Milestone } from "../types";
+import { Project } from "../types";
 import { getAllShuffledPermutations } from "../utils/arrayUtils";
 import { simulateSequence } from "./simulationService";
 
-export const optimizeSequence = (testSequence: Milestone[]): Milestone[] => {
+export const optimizeSequence = (testSequence: Project[]): Project[] => {
   let bestSequences: Array<{
-    sequence: Milestone[];
+    sequence: Project[];
     weightedAverageRatio: number;
   }> = [];
   let lowestDaysLate = Number.MAX_SAFE_INTEGER;

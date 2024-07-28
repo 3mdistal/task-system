@@ -155,7 +155,7 @@ export const tasks: Task[] = [
   },
   {
     name: "Develop data synchronization",
-    duration: 25,
+    duration: 25 + 300,
     timeSpent: 0,
     status: "planned",
     milestone: milestones[4],

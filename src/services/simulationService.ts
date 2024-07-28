@@ -1,5 +1,5 @@
 import { Project, ProjectResult, SimulationResult } from "../types";
-import { MS_PER_DAY, USABLE_HOURS_PER_DAY, addDays } from "../utils/dateUtils";
+import { MS_PER_DAY } from "../utils/dateUtils";
 import { calculateProjectDuration } from "../utils/calculationUtils";
 
 export const simulateSequence = (projects: Project[]): SimulationResult => {

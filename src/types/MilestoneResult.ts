@@ -1,7 +1,7 @@
-import { Milestone } from "./index";
+import { Project } from "./index";
 
-export interface MilestoneResult {
-  milestone: Milestone;
+export interface ProjectResult {
+  project: Project;
   index: number;
   daysLate?: number;
   daysEarly?: number;

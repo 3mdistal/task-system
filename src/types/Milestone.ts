@@ -1,8 +1,10 @@
+import type { Status, Task } from "./";
+import { Project } from "./Project";
+
 export interface Milestone {
+  dependencies: Array<Milestone | Task>;
   name: string;
-  viability: number;
-  excitement: number;
-  project: string;
-  soft_deadline?: string;
-  hard_deadline?: string;
+  project: Project;
+  status: Status;
+  tasks: () => Task[];
 }

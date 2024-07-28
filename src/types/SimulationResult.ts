@@ -1,9 +1,9 @@
-import { MilestoneResult } from "./index";
+import { ProjectResult } from "./index";
 
 export interface SimulationResult {
   totalDaysLate: number;
-  milestonesLate: MilestoneResult[];
-  milestonesEarly: MilestoneResult[];
+  projectsLate: ProjectResult[];
+  projectsEarly: ProjectResult[];
   totalDuration: number;
   weightedAverageRatio: number;
   projectEndDate: Date;

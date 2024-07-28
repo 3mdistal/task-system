@@ -1,16 +1,15 @@
-import { Milestone } from "../types";
+import type { Project } from "../types";
 
 export const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export const USABLE_HOURS_PER_DAY = 3;
 
 export const getDaysUntilDeadline = (
-  milestone: Milestone,
+  project: Project,
   currentDate: Date = new Date()
 ): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
+  const { deadline } = project;
+
+  if (!deadline) {
     return Number.MAX_SAFE_INTEGER;
   }
 
@@ -26,13 +25,11 @@ export const getDaysUntilDeadline = (
 };
 
 export const getHoursUntilDeadline = (
-  milestone: Milestone,
+  project: Project,
   date: Date = new Date()
 ): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
+  const { deadline } = project;
+  if (!deadline) {
     return Number.MAX_SAFE_INTEGER;
   }
 

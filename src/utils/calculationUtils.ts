@@ -1,25 +1,50 @@
-import { Task, Milestone } from "../types";
+import { Task, Milestone, Project, Goal } from "../types";
 import { getHoursUntilDeadline } from "./dateUtils";
-import { tasks } from "../index";
 
-export const calculateTotalDuration = (tasks: Task[]): number =>
+export const calculateTasksDuration = (tasks: Task[]): number =>
   tasks.reduce((total, task) => total + task.duration, 0);
 
+export const calculateMilestoneDuration = (milestone: Milestone): number =>
+  calculateTasksDuration(milestone.tasks());
+
+export const calculateProjectDuration = (project: Project): number =>
+  project
+    .milestones()
+    .reduce(
+      (total, milestone) => total + calculateMilestoneDuration(milestone),
+      0
+    );
+
 export const calculateDeadlineRatio = (
-  milestone: Milestone,
+  project: Project,
   date: Date
 ): number => {
-  const milestoneTasks = getTasksForMilestone(milestone);
-  const duration = calculateTotalDuration(milestoneTasks);
-  const hours = getHoursUntilDeadline(milestone, date);
+  if (project.milestones().length === 0) return 0;
+
+  const duration = calculateProjectDuration(project);
+  const hours = getHoursUntilDeadline(project, date);
 
   if (duration === 0) return 0;
   return hours / duration;
 };
 
-export const isDeadlineMeetable = (milestone: Milestone, date: Date): boolean =>
-  (!milestone.hard_deadline && !milestone.soft_deadline) ||
-  calculateDeadlineRatio(milestone, date) >= 1;
+export const isDeadlineMeetable = (project: Project, date: Date): boolean => {
+  if (!project.deadline) return true;
+  return calculateDeadlineRatio(project, date) >= 1;
+};
 
-export const getTasksForMilestone = (milestone: Milestone): Task[] =>
-  tasks.filter((task) => task.milestone === milestone.name);
+export const getTasksForMilestone = (
+  milestone: Milestone,
+  allTasks: Task[]
+): Task[] => allTasks.filter((task) => task.milestone === milestone);
+
+export const getMilestonesForProject = (
+  project: Project,
+  allMilestones: Milestone[]
+): Milestone[] =>
+  allMilestones.filter((milestone) => milestone.project === project);
+
+export const getProjectsForGoal = (
+  goal: Goal,
+  allProjects: Project[]
+): Project[] => allProjects.filter((project) => project.goal === goal);

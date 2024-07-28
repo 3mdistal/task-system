@@ -1,7 +1,11 @@
+import { Milestone } from "./";
+import { Status } from "./";
+
 export interface Task {
-  name: string;
+  dependencies: Array<Task>;
   duration: number;
-  milestone?: string;
-  soft_deadline?: string;
-  hard_deadline?: string;
+  timeSpent: number;
+  milestone?: Milestone;
+  name: string;
+  status: Status;
 }

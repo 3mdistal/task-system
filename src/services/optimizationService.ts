@@ -1,7 +1,7 @@
 import { Project, Task, Goal, Milestone } from "../types";
 import { simulateTaskSequence } from "./simulationService";
 
-interface SimulationResult {
+export interface SimulationResult {
   score: number;
   completedTasks: Task[];
   endDate: Date;

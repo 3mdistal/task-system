@@ -1,6 +1,7 @@
-import { Task, SimulationResult, Project } from "../types";
+import { Task, Project } from "../types";
 import { USABLE_HOURS_PER_DAY } from "../utils/dateUtils";
 import { calculateTaskScore } from "../utils/calculationUtils";
+import type { SimulationResult } from "./optimizationService";
 
 export const simulateTaskSequence = (tasks: Task[]): SimulationResult => {
   const state = initializeSimulation();

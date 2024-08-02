@@ -1,4 +1,4 @@
-import { Task, Project } from "../types";
+import { Task, Project, SimulationState } from "../types";
 import { USABLE_HOURS_PER_DAY } from "../utils/dateUtils";
 import { calculateTaskScore } from "../utils/calculationUtils";
 import type { SimulationResult } from "./optimizationService";
@@ -14,13 +14,6 @@ export const simulateTaskSequence = (tasks: Task[]): SimulationResult => {
 
   return finalizeSimulation(state);
 };
-
-interface SimulationState {
-  currentDate: Date;
-  totalScore: number;
-  completedTasks: Task[];
-  projectDeadlines: Map<Project, Date>;
-}
 
 const initializeSimulation = (): SimulationState => ({
   currentDate: new Date(),

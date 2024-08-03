@@ -1,14 +1,28 @@
 import { Task, Project, SimulationState } from "../types";
-import { USABLE_HOURS_PER_DAY } from "../utils/dateUtils";
+import { addDays } from "../utils/dateUtils";
 import { calculateTaskScore } from "../utils/calculationUtils";
 import type { SimulationResult } from "./optimizationService";
 
 export const simulateTaskSequence = (tasks: Task[]): SimulationResult => {
   const state = initializeSimulation();
+  const remainingTasks = [...tasks];
 
-  for (const task of tasks) {
-    if (canStartTask(task, state.completedTasks)) {
-      processTask(task, state);
+  while (remainingTasks.length > 0) {
+    let taskProcessed = false;
+
+    for (let i = 0; i < remainingTasks.length; i++) {
+      const task = remainingTasks[i];
+      if (canStartTask(task, state.completedTasks)) {
+        processTask(task, state);
+        remainingTasks.splice(i, 1);
+        i--; // Adjust index after removing task
+        taskProcessed = true;
+      }
+    }
+
+    if (!taskProcessed) {
+      console.warn("No tasks could be processed. Breaking loop.");
+      break;
     }
   }
 
@@ -24,11 +38,6 @@ const initializeSimulation = (): SimulationState => ({
 
 const processTask = (task: Task, state: SimulationState): void => {
   const { project, newDate } = getProjectAndNewDate(task, state);
-
-  if (isTaskAfterDeadline(project, newDate, state.projectDeadlines)) {
-    return; // Skip this task
-  }
-
   updateSimulationState(task, newDate, state);
 };
 
@@ -43,12 +52,6 @@ const getProjectAndNewDate = (task: Task, state: SimulationState) => {
   const { date: newDate } = addDays(task.duration, state.currentDate);
   return { project, newDate };
 };
-
-const isTaskAfterDeadline = (
-  project: Project | undefined,
-  newDate: Date,
-  projectDeadlines: Map<Project, Date>
-): boolean => (project ? newDate > projectDeadlines.get(project)! : false);
 
 const updateSimulationState = (
   task: Task,
@@ -72,7 +75,9 @@ const finalizeSimulation = (state: SimulationState): SimulationResult => ({
 });
 
 const canStartTask = (task: Task, completedTasks: Task[]): boolean => {
-  return task.dependencies.every((dep) => completedTasks.includes(dep));
+  return task.dependencies.every((dep) =>
+    completedTasks.some((completedTask) => completedTask.name === dep.name)
+  );
 };
 
 const isProjectCompleted = (
@@ -82,18 +87,7 @@ const isProjectCompleted = (
   const projectTasks = project
     .milestones()
     .flatMap((milestone) => milestone.tasks());
-  return projectTasks.every((task) => completedTasks.includes(task));
-};
-
-const addDays = (
-  duration: number,
-  currentDate: Date
-): { date: Date; hoursUsed: number } => {
-  const daysToAdd = Math.floor(duration / USABLE_HOURS_PER_DAY);
-  const newDate = new Date(currentDate);
-  newDate.setDate(newDate.getDate() + daysToAdd);
-  return {
-    date: newDate,
-    hoursUsed: duration % USABLE_HOURS_PER_DAY,
-  };
+  return projectTasks.every((task) =>
+    completedTasks.some((completedTask) => completedTask.name === task.name)
+  );
 };

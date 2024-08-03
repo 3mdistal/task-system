@@ -9,31 +9,32 @@ export interface SimulationResult {
 
 export const optimizeSequence = (projects: Project[]): Task[] => {
   const allTasks = getAllTasksFromProjects(projects);
-  const goals = getUniqueGoals(allTasks);
-  const projectsSet = getUniqueProjects(allTasks);
-  const milestones = getUniqueMilestones(allTasks);
 
-  const strategies = [
+  const strategies: OptimizationStrategy[] = [
     {
       name: "goals",
-      items: goals,
+      items: new Map(getUniqueGoals(allTasks).map((goal) => [goal, true])),
       getItem: (task: Task) => task.milestone?.project.goal,
     },
     {
       name: "projects",
-      items: projectsSet,
+      items: new Map(
+        getUniqueProjects(allTasks).map((project) => [project, true])
+      ),
       getItem: (task: Task) => task.milestone?.project,
     },
     {
       name: "milestones",
-      items: milestones,
+      items: new Map(
+        getUniqueMilestones(allTasks).map((milestone) => [milestone, true])
+      ),
       getItem: (task: Task) => task.milestone,
     },
   ];
 
-  let bestResult = tryOptimizationStrategies(allTasks, strategies);
+  const result = tryOptimizationStrategies(allTasks, strategies);
 
-  return bestResult.completedTasks;
+  return result.completedTasks;
 };
 
 const tryOptimizationStrategies = (
@@ -41,100 +42,93 @@ const tryOptimizationStrategies = (
   strategies: OptimizationStrategy[]
 ): SimulationResult => {
   let bestResult: SimulationResult = {
-    score: 0,
+    score: -Infinity,
     completedTasks: [],
     endDate: new Date(),
   };
 
   for (const strategy of strategies) {
-    const result = tryStrategy(allTasks, strategy);
-    if (result.score > bestResult.score) {
+    const alternatingSequence = generateAlternatingSequence(
+      allTasks,
+      strategy.items,
+      strategy.getItem
+    );
+    const result = simulateTaskSequence(alternatingSequence);
+
+    if (
+      result.score > bestResult.score ||
+      (result.score === bestResult.score &&
+        countProjectChanges(result.completedTasks) >
+          countProjectChanges(bestResult.completedTasks))
+    ) {
       bestResult = result;
-    }
-    if (areAllDeadlinesMet(result.completedTasks)) {
-      break;
     }
   }
 
   return bestResult;
 };
 
-interface OptimizationStrategy {
-  name: string;
-  items: any[];
-  getItem: (task: Task) => any;
-}
-
-const tryStrategy = (
-  allTasks: Task[],
-  strategy: OptimizationStrategy
-): SimulationResult => {
-  const sequence = generateAlternatingSequence(
-    allTasks,
-    strategy.items,
-    strategy.getItem
-  );
-  return simulateTaskSequence(sequence);
-};
-
-const generateAlternatingSequence = <T>(
+const generateAlternatingSequence = (
   tasks: Task[],
-  items: T[],
-  getItem: (task: Task) => T | undefined
+  items: Map<any, boolean>,
+  getItem: (task: Task) => any
 ): Task[] => {
   const sequence: Task[] = [];
   const remainingTasks = new Set(tasks);
+  const itemsArray = Array.from(items.keys());
   let currentIndex = 0;
+  let cycleCount = 0;
 
   while (remainingTasks.size > 0) {
-    const currentItem = items[currentIndex % items.length];
-    const task = Array.from(remainingTasks).find(
-      (t) => getItem(t) === currentItem
-    );
+    let taskAdded = false;
+    for (let i = 0; i < itemsArray.length; i++) {
+      const currentItem = itemsArray[(currentIndex + i) % itemsArray.length];
+      const task = Array.from(remainingTasks).find(
+        (t) => getItem(t) === currentItem
+      );
 
-    if (task) {
-      sequence.push(task);
-      remainingTasks.delete(task);
+      if (task) {
+        sequence.push(task);
+        remainingTasks.delete(task);
+        taskAdded = true;
+        break;
+      }
     }
 
-    currentIndex++;
-    if (currentIndex >= items.length * 2) {
-      // If we've gone through the list twice without finding a matching task, add any remaining tasks
-      sequence.push(...Array.from(remainingTasks));
-      break;
+    if (!taskAdded) {
+      cycleCount++;
+      if (cycleCount >= 2) {
+        const nextTask = remainingTasks.values().next().value;
+        if (nextTask) {
+          sequence.push(nextTask);
+          remainingTasks.delete(nextTask);
+        }
+      }
+    } else {
+      cycleCount = 0;
     }
+
+    currentIndex = (currentIndex + 1) % itemsArray.length;
   }
 
   return sequence;
 };
 
-const areAllDeadlinesMet = (completedTasks: Task[]): boolean => {
-  const projectCompletionDates = new Map<Project, Date>();
-
-  for (const task of completedTasks) {
-    const project = task.milestone?.project;
-    if (project) {
-      const completionDate = projectCompletionDates.get(project) || new Date(0);
-      projectCompletionDates.set(
-        project,
-        new Date(
-          Math.max(
-            completionDate.getTime(),
-            task.completionDate?.getTime() || 0
-          )
-        )
-      );
+const countProjectChanges = (sequence: Task[]): number => {
+  let changes = 0;
+  for (let i = 1; i < sequence.length; i++) {
+    if (sequence[i].milestone?.project !== sequence[i - 1].milestone?.project) {
+      changes++;
     }
   }
-
-  for (const [project, completionDate] of projectCompletionDates.entries()) {
-    if (project.deadline && completionDate > project.deadline) {
-      return false;
-    }
-  }
-
-  return true;
+  return changes;
 };
+
+interface OptimizationStrategy {
+  name: string;
+  items: Map<any, boolean>;
+  getItem: (task: Task) => any;
+}
 
 const getAllTasksFromProjects = (projects: Project[]): Task[] => {
   return projects.flatMap((project) =>

@@ -1,4 +1,4 @@
-import { Milestone } from "./";
+import { Milestone, Goal } from "./";
 import { Status } from "./";
 
 export interface Task {
@@ -9,4 +9,5 @@ export interface Task {
   milestone?: Milestone;
   name: string;
   status: Status;
+  goal?: Goal;
 }

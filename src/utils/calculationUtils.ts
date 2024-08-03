@@ -15,24 +15,6 @@ export const calculateProjectDuration = (project: Project): number =>
       0
     );
 
-export const calculateDeadlineRatio = (
-  project: Project,
-  date: Date
-): number => {
-  if (project.milestones().length === 0) return 0;
-
-  const duration = calculateProjectDuration(project);
-  const hours = getHoursUntilDeadline(project, date);
-
-  if (duration === 0) return 0;
-  return hours / duration; // todo: make the ratio approach 1 (100% busy) instead of what it currently is
-};
-
-export const isDeadlineMeetable = (project: Project, date: Date): boolean => {
-  if (!project.deadline) return true;
-  return calculateDeadlineRatio(project, date) >= 1;
-};
-
 export const getTasksForMilestone = (
   milestone: Milestone,
   allTasks: Task[]

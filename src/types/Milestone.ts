@@ -1,10 +1,11 @@
-import type { Status, Task } from "./";
-import { Project } from "./Project";
+import type { Status } from "./";
 
 export interface Milestone {
-  dependencies: Array<Milestone | Task>;
+  id: string;
   name: string;
-  project: Project;
+  projectId: string;
+  dependencyIds: string[];
   status: Status;
-  tasks: () => Task[];
+  taskIds: string[];
+  type: "milestone";
 }

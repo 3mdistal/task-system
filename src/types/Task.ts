@@ -1,13 +1,13 @@
-import { Milestone, Goal } from "./";
 import { Status } from "./";
 
 export interface Task {
-  completionDate?: Date;
-  dependencies: Array<Task>;
-  duration: number;
-  timeSpent: number;
-  milestone?: Milestone;
+  id: string;
   name: string;
   status: Status;
-  goal?: Goal;
+  completionDate?: Date;
+  dependencyIds: string[];
+  duration: number;
+  timeSpent: number;
+  milestoneId?: string;
+  type: "task";
 }

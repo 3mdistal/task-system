@@ -1,7 +1,9 @@
-import { Project, Status } from "./";
+import { Status } from "./";
 
 export interface Goal {
+  id: string;
   name: string;
-  projects: () => Project[];
+  projectIds: string[];
   status: Status;
+  type: "goal";
 }

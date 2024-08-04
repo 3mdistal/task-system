@@ -2,9 +2,9 @@ import { Project, CrunchInfo } from "../types";
 
 export function calculateCrunchInfo(
   projects: Project[],
-  endDate: Date
+  currentDate: Date
 ): CrunchInfo {
-  const projectsWithDeadlines = projects.filter((p) => p.deadline);
+  const projectsWithDeadlines = projects.filter((project) => project.deadline);
 
   if (projectsWithDeadlines.length === 0) {
     return {
@@ -15,22 +15,36 @@ export function calculateCrunchInfo(
     };
   }
 
-  const crunchByProject = projectsWithDeadlines.reduce((acc, project) => {
-    const crunch = Math.floor(
-      (project.deadline!.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    acc[project.name] = crunch;
-    return acc;
-  }, {} as { [projectName: string]: number });
+  const crunchByProject: { [projectName: string]: number } = {};
+  let totalCrunch = 0;
+  let earliestCrunch = Infinity;
+  let latestCrunch = -Infinity;
 
-  const crunchValues = Object.values(crunchByProject);
+  const MAX_CRUNCH = 365 * 10; // 10 years as maximum crunch
+
+  projectsWithDeadlines.forEach((project) => {
+    const crunch = Math.min(
+      Math.floor(
+        (project.deadline!.getTime() - currentDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      ),
+      MAX_CRUNCH
+    );
+    crunchByProject[project.name] = crunch;
+    totalCrunch += crunch;
+    earliestCrunch = Math.min(earliestCrunch, crunch);
+    latestCrunch = Math.max(latestCrunch, crunch);
+  });
+
+  const averageCrunch = Math.max(
+    0,
+    Math.round(totalCrunch / projectsWithDeadlines.length)
+  );
 
   return {
-    earliestCrunch: Math.min(...crunchValues),
-    latestCrunch: Math.max(...crunchValues),
-    averageCrunch: Math.round(
-      crunchValues.reduce((sum, value) => sum + value, 0) / crunchValues.length
-    ),
+    earliestCrunch,
+    latestCrunch,
+    averageCrunch,
     crunchByProject,
   };
 }

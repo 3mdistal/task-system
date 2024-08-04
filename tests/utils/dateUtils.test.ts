@@ -9,17 +9,15 @@ import {
 
 describe("Date Utility Functions", () => {
   const baseProject: Project = {
+    id: "test-project-id",
     name: "Test Project",
     viability: 1,
     excitement: 1,
     deadlineType: "hard",
-    goal: {
-      name: "Test Goal",
-      projects: () => [],
-      status: "planned",
-    },
-    milestones: () => [],
+    goalId: "test-goal-id",
+    milestoneIds: [],
     status: "planned",
+    type: "project",
   };
 
   describe("getDaysUntilDeadline", () => {

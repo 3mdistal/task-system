@@ -9,9 +9,9 @@ import rawData from "./data/rawData.json";
 export function optimizeTasks(
   rawData: ObsidianDataViewData
 ): OptimizationResult {
-  const { projects } = convertObsidianData(rawData);
-  const bestSequence = optimizeSequence(projects);
-  const result = simulateTaskSequence(bestSequence);
+  const { projects, milestones, tasks } = convertObsidianData(rawData);
+  const bestSequence = optimizeSequence(projects, milestones, tasks);
+  const result = simulateTaskSequence(bestSequence, projects, milestones);
 
   if (!result || !result.completedTasks || !result.endDate) {
     console.error("Invalid simulation result:", result);

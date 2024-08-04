@@ -1,29 +1,10 @@
-import { Project, Task, ObsidianDataViewData } from "./types";
+import { ObsidianDataViewData, OptimizationResult } from "./types";
 import { optimizeSequence } from "./services/optimizationService";
 import { simulateTaskSequence } from "./services/simulationService";
 import { convertObsidianData } from "./utils/obsidian/obsidianDataConverter";
-interface OptimizationResult {
-  optimizedSequence: Task[];
-  statistics: {
-    score: number;
-    completedTasks: Task[];
-    endDate: Date;
-  };
-  deadlineStatus: {
-    allHardDeadlinesMet: boolean;
-    allSoftDeadlinesMet: boolean;
-    missedHardDeadlines: string[];
-    missedSoftDeadlines: string[];
-  };
-  crunchInfo: CrunchInfo;
-}
-
-interface CrunchInfo {
-  earliestCrunch: number;
-  latestCrunch: number;
-  averageCrunch: number;
-  crunchByProject: { [projectName: string]: number };
-}
+import { checkDeadlineStatus } from "./utils/dateUtils";
+import { calculateCrunchInfo } from "./utils/crunchUtils";
+import rawData from "./data/rawData.json";
 
 export function optimizeTasks(
   rawData: ObsidianDataViewData
@@ -34,29 +15,10 @@ export function optimizeTasks(
 
   if (!result || !result.completedTasks || !result.endDate) {
     console.error("Invalid simulation result:", result);
-    return {
-      optimizedSequence: [],
-      statistics: {
-        score: 0,
-        completedTasks: [],
-        endDate: new Date(),
-      },
-      deadlineStatus: {
-        allHardDeadlinesMet: false,
-        allSoftDeadlinesMet: false,
-        missedHardDeadlines: [],
-        missedSoftDeadlines: [],
-      },
-      crunchInfo: {
-        earliestCrunch: 0,
-        latestCrunch: 0,
-        averageCrunch: 0,
-        crunchByProject: {},
-      },
-    };
+    return createEmptyOptimizationResult();
   }
 
-  const deadlineStatus = checkDeadlineStatus(result.completedTasks);
+  const deadlineStatus = checkDeadlineStatus(result.completedTasks, projects);
   const crunchInfo = calculateCrunchInfo(projects, result.endDate);
 
   const optimizationResult: OptimizationResult = {
@@ -66,11 +28,42 @@ export function optimizeTasks(
     crunchInfo,
   };
 
-  console.log(
-    "Optimization Result:",
-    JSON.stringify(optimizationResult, null, 2)
-  );
+  logOptimizationResult(optimizationResult);
+  checkDeadlines(deadlineStatus);
 
+  return optimizationResult;
+}
+
+function createEmptyOptimizationResult(): OptimizationResult {
+  return {
+    optimizedSequence: [],
+    statistics: {
+      score: 0,
+      completedTasks: [],
+      endDate: new Date(),
+    },
+    deadlineStatus: {
+      allHardDeadlinesMet: false,
+      allSoftDeadlinesMet: false,
+      missedHardDeadlines: [],
+      missedSoftDeadlines: [],
+    },
+    crunchInfo: {
+      earliestCrunch: 0,
+      latestCrunch: 0,
+      averageCrunch: 0,
+      crunchByProject: {},
+    },
+  };
+}
+
+function logOptimizationResult(result: OptimizationResult): void {
+  console.log("Optimization Result:", JSON.stringify(result, null, 2));
+}
+
+function checkDeadlines(
+  deadlineStatus: OptimizationResult["deadlineStatus"]
+): void {
   if (
     !deadlineStatus.allHardDeadlinesMet ||
     !deadlineStatus.allSoftDeadlinesMet
@@ -79,75 +72,7 @@ export function optimizeTasks(
       "ERROR: Not all deadlines are met. Task rescheduling may be necessary."
     );
   }
-
-  return optimizationResult;
 }
 
-export function checkDeadlineStatus(
-  completedTasks: Task[]
-): OptimizationResult["deadlineStatus"] {
-  const status = {
-    allHardDeadlinesMet: true,
-    allSoftDeadlinesMet: true,
-    missedHardDeadlines: [] as string[],
-    missedSoftDeadlines: [] as string[],
-  };
-
-  completedTasks.forEach((task) => {
-    const project = task.milestone?.project;
-    if (project && project.deadline && task.completionDate) {
-      if (task.completionDate > project.deadline) {
-        if (project.deadlineType === "hard") {
-          status.allHardDeadlinesMet = false;
-          status.missedHardDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        } else {
-          status.allSoftDeadlinesMet = false;
-          status.missedSoftDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        }
-      }
-    }
-  });
-
-  return status;
-}
-
-export function calculateCrunchInfo(
-  projects: Project[],
-  endDate: Date
-): CrunchInfo {
-  const projectsWithDeadlines = projects.filter((p) => p.deadline);
-
-  if (projectsWithDeadlines.length === 0) {
-    return {
-      earliestCrunch: 0,
-      latestCrunch: 0,
-      averageCrunch: 0,
-      crunchByProject: {},
-    };
-  }
-
-  const crunchByProject = projectsWithDeadlines.reduce((acc, project) => {
-    const crunch = Math.floor(
-      (project.deadline!.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    acc[project.name] = crunch;
-    return acc;
-  }, {} as { [projectName: string]: number });
-
-  const crunchValues = Object.values(crunchByProject);
-
-  return {
-    earliestCrunch: Math.min(...crunchValues),
-    latestCrunch: Math.max(...crunchValues),
-    averageCrunch: Math.round(
-      crunchValues.reduce((sum, value) => sum + value, 0) / crunchValues.length
-    ),
-    crunchByProject,
-  };
-}
-
-optimizeTasks(projects);
+const data = rawData as ObsidianDataViewData;
+optimizeTasks(data);

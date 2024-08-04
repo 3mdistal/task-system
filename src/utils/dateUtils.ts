@@ -1,4 +1,4 @@
-import type { Project } from "../types";
+import type { Project, Task, OptimizationResult } from "../types";
 
 export const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export const USABLE_HOURS_PER_DAY = 3;
@@ -78,3 +78,40 @@ export const addDays = (
     hoursUsed,
   };
 };
+
+export function checkDeadlineStatus(
+  completedTasks: Task[],
+  projects: Project[]
+): OptimizationResult["deadlineStatus"] {
+  const status = {
+    allHardDeadlinesMet: true,
+    allSoftDeadlinesMet: true,
+    missedHardDeadlines: [] as string[],
+    missedSoftDeadlines: [] as string[],
+  };
+
+  completedTasks.forEach((task) => {
+    if (task.milestoneId) {
+      const project = projects.find((p) =>
+        p.milestoneIds.includes(task.milestoneId!)
+      );
+      if (project && project.deadline && task.completionDate) {
+        if (task.completionDate > project.deadline) {
+          if (project.deadlineType === "hard") {
+            status.allHardDeadlinesMet = false;
+            status.missedHardDeadlines.push(
+              `${project.name}: ${project.deadline.toISOString()}`
+            );
+          } else {
+            status.allSoftDeadlinesMet = false;
+            status.missedSoftDeadlines.push(
+              `${project.name}: ${project.deadline.toISOString()}`
+            );
+          }
+        }
+      }
+    }
+  });
+
+  return status;
+}

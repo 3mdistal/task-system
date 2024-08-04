@@ -7,39 +7,56 @@ export interface SimulationResult {
   endDate: Date;
 }
 
-export const optimizeSequence = (projects: Project[]): Task[] => {
-  const allTasks = getAllTasksFromProjects(projects);
+export const optimizeSequence = (
+  projects: Project[],
+  milestones: Milestone[],
+  tasks: Task[]
+): Task[] => {
+  const allTasks = getAllTasksFromProjects(projects, milestones, tasks);
 
   const strategies: OptimizationStrategy[] = [
     {
       name: "goals",
-      items: new Map(getUniqueGoals(allTasks).map((goal) => [goal, true])),
-      getItem: (task: Task) => task.milestone?.project.goal,
+      items: getUniqueGoals(allTasks, milestones, projects),
+      getItemId: (task: Task) => {
+        const milestone = milestones.find((m) => m.id === task.milestoneId);
+        if (milestone) {
+          const project = projects.find((p) => p.id === milestone.projectId);
+          return project?.goalId;
+        }
+        return undefined;
+      },
     },
     {
       name: "projects",
-      items: new Map(
-        getUniqueProjects(allTasks).map((project) => [project, true])
-      ),
-      getItem: (task: Task) => task.milestone?.project,
+      items: getUniqueProjects(allTasks, milestones),
+      getItemId: (task: Task) => {
+        const milestone = milestones.find((m) => m.id === task.milestoneId);
+        return milestone?.projectId;
+      },
     },
     {
       name: "milestones",
-      items: new Map(
-        getUniqueMilestones(allTasks).map((milestone) => [milestone, true])
-      ),
-      getItem: (task: Task) => task.milestone,
+      items: getUniqueMilestones(allTasks),
+      getItemId: (task: Task) => task.milestoneId,
     },
   ];
 
-  const result = tryOptimizationStrategies(allTasks, strategies);
+  const result = tryOptimizationStrategies(
+    allTasks,
+    strategies,
+    projects,
+    milestones
+  );
 
   return result.completedTasks;
 };
 
 const tryOptimizationStrategies = (
   allTasks: Task[],
-  strategies: OptimizationStrategy[]
+  strategies: OptimizationStrategy[],
+  projects: Project[],
+  milestones: Milestone[]
 ): SimulationResult => {
   let bestResult: SimulationResult = {
     score: -Infinity,
@@ -51,10 +68,13 @@ const tryOptimizationStrategies = (
     const alternatingSequence = generateAlternatingSequence(
       allTasks,
       strategy.items,
-      strategy.getItem
+      strategy.getItemId
     );
-    const result = simulateTaskSequence(alternatingSequence);
-
+    const result = simulateTaskSequence(
+      alternatingSequence,
+      projects,
+      milestones
+    );
     if (
       result.score > bestResult.score ||
       (result.score === bestResult.score &&
@@ -70,21 +90,21 @@ const tryOptimizationStrategies = (
 
 const generateAlternatingSequence = (
   tasks: Task[],
-  items: Map<any, boolean>,
-  getItem: (task: Task) => any
+  items: Set<string>,
+  getItemId: (task: Task) => string | undefined
 ): Task[] => {
   const sequence: Task[] = [];
   const remainingTasks = new Set(tasks);
-  const itemsArray = Array.from(items.keys());
+  const itemsArray = Array.from(items);
   let currentIndex = 0;
   let cycleCount = 0;
 
   while (remainingTasks.size > 0) {
     let taskAdded = false;
     for (let i = 0; i < itemsArray.length; i++) {
-      const currentItem = itemsArray[(currentIndex + i) % itemsArray.length];
+      const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
       const task = Array.from(remainingTasks).find(
-        (t) => getItem(t) === currentItem
+        (t) => getItemId(t) === currentItemId
       );
 
       if (task) {
@@ -117,7 +137,7 @@ const generateAlternatingSequence = (
 const countProjectChanges = (sequence: Task[]): number => {
   let changes = 0;
   for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].milestone?.project !== sequence[i - 1].milestone?.project) {
+    if (sequence[i].milestoneId !== sequence[i - 1].milestoneId) {
       changes++;
     }
   }
@@ -126,42 +146,65 @@ const countProjectChanges = (sequence: Task[]): number => {
 
 interface OptimizationStrategy {
   name: string;
-  items: Map<any, boolean>;
-  getItem: (task: Task) => any;
+  items: Set<string>;
+  getItemId: (task: Task) => string | undefined;
 }
 
-const getAllTasksFromProjects = (projects: Project[]): Task[] => {
+const getAllTasksFromProjects = (
+  projects: Project[],
+  milestones: Milestone[],
+  tasks: Task[]
+): Task[] => {
   return projects.flatMap((project) =>
-    project.milestones().flatMap((milestone) => milestone.tasks())
+    project.milestoneIds.flatMap((milestoneId) => {
+      const milestone = milestones.find((m) => m.id === milestoneId);
+      return milestone
+        ? milestone.taskIds
+            .map((taskId) => tasks.find((t) => t.id === taskId))
+            .filter((t): t is Task => t !== undefined)
+        : [];
+    })
   );
 };
 
-const getUniqueGoals = (tasks: Task[]): Goal[] => {
-  const goals = new Set<Goal>();
+const getUniqueGoals = (
+  tasks: Task[],
+  milestones: Milestone[],
+  projects: Project[]
+): Set<string> => {
+  const goalIds = new Set<string>();
   tasks.forEach((task) => {
-    if (task.milestone?.project.goal) {
-      goals.add(task.milestone.project.goal);
+    const milestone = milestones.find((m) => m.id === task.milestoneId);
+    if (milestone) {
+      const project = projects.find((p) => p.id === milestone.projectId);
+      if (project && project.goalId) {
+        goalIds.add(project.goalId);
+      }
     }
   });
-  return Array.from(goals);
+  return goalIds;
 };
 
-const getUniqueProjects = (tasks: Task[]): Project[] => {
-  const projects = new Set<Project>();
+const getUniqueProjects = (
+  tasks: Task[],
+  milestones: Milestone[]
+): Set<string> => {
+  const projectIds = new Set<string>();
   tasks.forEach((task) => {
-    if (task.milestone?.project) {
-      projects.add(task.milestone.project);
+    const milestone = milestones.find((m) => m.id === task.milestoneId);
+    if (milestone) {
+      projectIds.add(milestone.projectId);
     }
   });
-  return Array.from(projects);
+  return projectIds;
 };
 
-const getUniqueMilestones = (tasks: Task[]): Milestone[] => {
-  const milestones = new Set<Milestone>();
+const getUniqueMilestones = (tasks: Task[]): Set<string> => {
+  const milestoneIds = new Set<string>();
   tasks.forEach((task) => {
-    if (task.milestone) {
-      milestones.add(task.milestone);
+    if (task.milestoneId) {
+      milestoneIds.add(task.milestoneId);
     }
   });
-  return Array.from(milestones);
+  return milestoneIds;
 };

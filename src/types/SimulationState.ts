@@ -4,5 +4,5 @@ export type SimulationState = {
   currentDate: Date;
   totalScore: number;
   completedTasks: Task[];
-  projectDeadlines: Map<Project, Date>;
+  projectDeadlines: Map<string, Date>;
 };

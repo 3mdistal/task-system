@@ -1,41 +1,57 @@
 import { Task, Milestone, Project, Goal } from "../types";
-import { getHoursUntilDeadline, getDaysUntilDeadline } from "./dateUtils";
+import { getDaysUntilDeadline } from "./dateUtils";
 
 export const calculateTasksDuration = (tasks: Task[]): number =>
   tasks.reduce((total, task) => total + task.duration, 0);
 
-export const calculateMilestoneDuration = (milestone: Milestone): number =>
-  calculateTasksDuration(milestone.tasks());
+export const calculateMilestoneDuration = (
+  milestone: Milestone,
+  allTasks: Task[]
+): number =>
+  calculateTasksDuration(
+    allTasks.filter((task) => task.milestoneId === milestone.id)
+  );
 
-export const calculateProjectDuration = (project: Project): number =>
-  project
-    .milestones()
+export const calculateProjectDuration = (
+  project: Project,
+  allMilestones: Milestone[],
+  allTasks: Task[]
+): number =>
+  project.milestoneIds
+    .map((id) => allMilestones.find((m) => m.id === id))
+    .filter((milestone): milestone is Milestone => milestone !== undefined)
     .reduce(
-      (total, milestone) => total + calculateMilestoneDuration(milestone),
+      (total, milestone) =>
+        total + calculateMilestoneDuration(milestone, allTasks),
       0
     );
 
 export const getTasksForMilestone = (
   milestone: Milestone,
   allTasks: Task[]
-): Task[] => allTasks.filter((task) => task.milestone === milestone);
+): Task[] => allTasks.filter((task) => task.milestoneId === milestone.id);
 
 export const getMilestonesForProject = (
   project: Project,
   allMilestones: Milestone[]
 ): Milestone[] =>
-  allMilestones.filter((milestone) => milestone.project === project);
+  allMilestones.filter((milestone) => milestone.projectId === project.id);
 
 export const getProjectsForGoal = (
   goal: Goal,
   allProjects: Project[]
-): Project[] => allProjects.filter((project) => project.goal === goal);
+): Project[] => allProjects.filter((project) => project.goalId === goal.id);
 
 export const calculateTaskScore = (
   task: Task,
-  completionDate: Date
+  completionDate: Date,
+  allMilestones: Milestone[],
+  allProjects: Project[]
 ): number => {
-  const project = task.milestone?.project;
+  const milestone = allMilestones.find((m) => m.id === task.milestoneId);
+  const project = milestone
+    ? allProjects.find((p) => p.id === milestone.projectId)
+    : undefined;
   if (!project) return 0;
 
   const daysUntilDeadline = getDaysUntilDeadline(project, completionDate);

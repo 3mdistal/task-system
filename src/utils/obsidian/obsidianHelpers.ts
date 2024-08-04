@@ -1,4 +1,4 @@
-import { Status } from "../types";
+import { Status } from "../../types";
 
 // Helper function to ensure we have a valid Status
 export function ensureValidStatus(status: any): Status {

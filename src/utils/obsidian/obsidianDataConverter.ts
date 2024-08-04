@@ -1,11 +1,11 @@
-import { Goal, Project, Milestone, Task } from "../types";
+import { Goal, Project, Milestone, Task } from "../../types";
 import {
   ObsidianDataViewData,
   ObsidianGoal,
   ObsidianProject,
   ObsidianMilestone,
   ObsidianTask,
-} from "../types/Obsidian";
+} from "../../types/Obsidian";
 import {
   ensureValidStatus,
   ensureValidExcitement,

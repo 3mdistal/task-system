@@ -1,7 +1,7 @@
 import { Goal, Project, Milestone, Task } from "../types";
-import { convertObsidianData } from "../utils/obsidianDataConverter";
+import { convertObsidianData } from "../utils/obsidian/obsidianDataConverter";
 import { ObsidianDataViewData } from "../types/Obsidian";
-import { fetchObsidianData } from "../utils/obsidianDataFetcher";
+import { fetchObsidianData } from "../utils/obsidian/obsidianDataFetcher";
 import { isGoal, isProject, isMilestone, isTask } from "../utils/typeGuards";
 
 let goals: Goal[] = [];

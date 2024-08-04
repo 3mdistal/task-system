@@ -1,8 +1,7 @@
-import { Project, Task } from "./types";
+import { Project, Task, ObsidianDataViewData } from "./types";
 import { optimizeSequence } from "./services/optimizationService";
 import { simulateTaskSequence } from "./services/simulationService";
-import { projects } from "./data/data";
-
+import { convertObsidianData } from "./utils/obsidian/obsidianDataConverter";
 interface OptimizationResult {
   optimizedSequence: Task[];
   statistics: {
@@ -26,7 +25,10 @@ interface CrunchInfo {
   crunchByProject: { [projectName: string]: number };
 }
 
-export function optimizeTasks(projects: Project[]): OptimizationResult {
+export function optimizeTasks(
+  rawData: ObsidianDataViewData
+): OptimizationResult {
+  const { projects } = convertObsidianData(rawData);
   const bestSequence = optimizeSequence(projects);
   const result = simulateTaskSequence(bestSequence);
 

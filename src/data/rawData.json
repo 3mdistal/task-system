@@ -5267,12 +5267,12 @@
                 "type": "file"
               },
               {
-                "path": "Aspirations/Milestones/Graybox the homepage.md",
+                "path": "Aspirations/Milestones/Monorepo setup.md",
                 "embed": false,
                 "type": "file"
               },
               {
-                "path": "Aspirations/Milestones/Monorepo setup.md",
+                "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "embed": false,
                 "type": "file"
               }
@@ -10555,6 +10555,12 @@
                 "display": "Site redesign - `shoroukelkobrsi.com`",
                 "embed": false,
                 "type": "file"
+              },
+              {
+                "path": "Aspirations/Milestones/Shorouk can use Payload.md",
+                "display": "Shorouk can use Payload",
+                "embed": false,
+                "type": "file"
               }
             ],
             "settings": {
@@ -10584,7 +10590,7 @@
               "prettyRenderInlineFieldsInLivePreview": true,
               "dataviewJsKeyword": "dataviewjs"
             },
-            "length": 1
+            "length": 2
           },
           "inlinks": {
             "values": [
@@ -10747,9 +10753,9 @@
                 },
                 "text": "Homepage flat design is accounted for and on the page in graybox.",
                 "tags": [],
-                "line": 45,
+                "line": 46,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10757,14 +10763,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 45,
+                    "line": 46,
                     "col": 0,
-                    "offset": 794
+                    "offset": 828
                   },
                   "end": {
-                    "line": 45,
+                    "line": 46,
                     "col": 71,
-                    "offset": 865
+                    "offset": 899
                   }
                 },
                 "subtasks": [],
@@ -10793,9 +10799,9 @@
                 },
                 "text": "Light and dark mode are accounted for.",
                 "tags": [],
-                "line": 46,
+                "line": 47,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10803,14 +10809,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 46,
+                    "line": 47,
                     "col": 0,
-                    "offset": 866
+                    "offset": 900
                   },
                   "end": {
-                    "line": 46,
+                    "line": 47,
                     "col": 44,
-                    "offset": 910
+                    "offset": 944
                   }
                 },
                 "subtasks": [],
@@ -10839,9 +10845,9 @@
                 },
                 "text": "Responsive design is accounted for.",
                 "tags": [],
-                "line": 47,
+                "line": 48,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10849,14 +10855,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 47,
+                    "line": 48,
                     "col": 0,
-                    "offset": 911
+                    "offset": 945
                   },
                   "end": {
-                    "line": 47,
+                    "line": 48,
                     "col": 41,
-                    "offset": 952
+                    "offset": 986
                   }
                 },
                 "subtasks": [],
@@ -10885,9 +10891,9 @@
                 },
                 "text": "Core animations have been templated out (like scroll transitions, etc).",
                 "tags": [],
-                "line": 48,
+                "line": 49,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10895,14 +10901,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 48,
+                    "line": 49,
                     "col": 0,
-                    "offset": 953
+                    "offset": 987
                   },
                   "end": {
-                    "line": 48,
+                    "line": 49,
                     "col": 77,
-                    "offset": 1030
+                    "offset": 1064
                   }
                 },
                 "subtasks": [],
@@ -10931,9 +10937,9 @@
                 },
                 "text": "Once this is done, most of the work is, honestly, done (at least for the homepage).",
                 "tags": [],
-                "line": 52,
+                "line": 53,
                 "lineCount": 1,
-                "list": 52,
+                "list": 53,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10941,14 +10947,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 52,
+                    "line": 53,
                     "col": 0,
-                    "offset": 1049
+                    "offset": 1083
                   },
                   "end": {
-                    "line": 52,
+                    "line": 53,
                     "col": 86,
-                    "offset": 1135
+                    "offset": 1169
                   }
                 },
                 "subtasks": [],
@@ -10973,9 +10979,9 @@
                 },
                 "text": "This also gives sensible params to follow throughout the site, which is really, really nice.",
                 "tags": [],
-                "line": 53,
+                "line": 54,
                 "lineCount": 1,
-                "list": 52,
+                "list": 53,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -10983,14 +10989,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 53,
+                    "line": 54,
                     "col": 0,
-                    "offset": 1136
+                    "offset": 1170
                   },
                   "end": {
-                    "line": 53,
+                    "line": 54,
                     "col": 94,
-                    "offset": 1230
+                    "offset": 1264
                   }
                 },
                 "subtasks": [],
@@ -11015,9 +11021,9 @@
                 },
                 "text": "I have something to show Shorouk that she can start to get excited about.",
                 "tags": [],
-                "line": 54,
+                "line": 55,
                 "lineCount": 1,
-                "list": 52,
+                "list": 53,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -11025,14 +11031,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 54,
+                    "line": 55,
                     "col": 0,
-                    "offset": 1231
+                    "offset": 1265
                   },
                   "end": {
-                    "line": 54,
+                    "line": 55,
                     "col": 75,
-                    "offset": 1306
+                    "offset": 1340
                   }
                 },
                 "subtasks": [],
@@ -11089,9 +11095,9 @@
                 },
                 "text": "Homepage flat design is accounted for and on the page in graybox.",
                 "tags": [],
-                "line": 45,
+                "line": 46,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -11099,14 +11105,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 45,
+                    "line": 46,
                     "col": 0,
-                    "offset": 794
+                    "offset": 828
                   },
                   "end": {
-                    "line": 45,
+                    "line": 46,
                     "col": 71,
-                    "offset": 865
+                    "offset": 899
                   }
                 },
                 "subtasks": [],
@@ -11135,9 +11141,9 @@
                 },
                 "text": "Light and dark mode are accounted for.",
                 "tags": [],
-                "line": 46,
+                "line": 47,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -11145,14 +11151,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 46,
+                    "line": 47,
                     "col": 0,
-                    "offset": 866
+                    "offset": 900
                   },
                   "end": {
-                    "line": 46,
+                    "line": 47,
                     "col": 44,
-                    "offset": 910
+                    "offset": 944
                   }
                 },
                 "subtasks": [],
@@ -11181,9 +11187,9 @@
                 },
                 "text": "Responsive design is accounted for.",
                 "tags": [],
-                "line": 47,
+                "line": 48,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -11191,14 +11197,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 47,
+                    "line": 48,
                     "col": 0,
-                    "offset": 911
+                    "offset": 945
                   },
                   "end": {
-                    "line": 47,
+                    "line": 48,
                     "col": 41,
-                    "offset": 952
+                    "offset": 986
                   }
                 },
                 "subtasks": [],
@@ -11227,9 +11233,9 @@
                 },
                 "text": "Core animations have been templated out (like scroll transitions, etc).",
                 "tags": [],
-                "line": 48,
+                "line": 49,
                 "lineCount": 1,
-                "list": 45,
+                "list": 46,
                 "outlinks": [],
                 "path": "Aspirations/Milestones/Graybox the homepage.md",
                 "children": [],
@@ -11237,14 +11243,14 @@
                 "annotated": false,
                 "position": {
                   "start": {
-                    "line": 48,
+                    "line": 49,
                     "col": 0,
-                    "offset": 953
+                    "offset": 987
                   },
                   "end": {
-                    "line": 48,
+                    "line": 49,
                     "col": 77,
-                    "offset": 1030
+                    "offset": 1064
                   }
                 },
                 "subtasks": [],
@@ -11291,15 +11297,15 @@
           },
           "ctime": "2024-07-17T03:04:14.543-04:00",
           "cday": "2024-07-17T00:00:00.000-04:00",
-          "mtime": "2024-07-17T05:06:39.256-04:00",
-          "mday": "2024-07-17T00:00:00.000-04:00",
-          "size": 1633,
+          "mtime": "2024-08-04T04:16:11.107-04:00",
+          "mday": "2024-08-04T00:00:00.000-04:00",
+          "size": 1667,
           "starred": false,
           "frontmatter": {
             "type": "milestone",
             "status": "in-flight",
             "project": "[[Site redesign - `shoroukelkobrsi.com`]]",
-            "dependencies": null
+            "dependencies": ["[[Shorouk can use Payload]]"]
           },
           "ext": "md"
         },
@@ -11310,7 +11316,13 @@
           "embed": false,
           "type": "file"
         },
-        "dependencies": null
+        "dependencies": [
+          {
+            "path": "Aspirations/Milestones/Shorouk can use Payload.md",
+            "embed": false,
+            "type": "file"
+          }
+        ]
       },
       {
         "file": {
@@ -12175,6 +12187,11 @@
                 "path": "Aspirations/Tasks/Figure out cache busting in preview and prod.md",
                 "embed": false,
                 "type": "file"
+              },
+              {
+                "path": "Aspirations/Milestones/Graybox the homepage.md",
+                "embed": false,
+                "type": "file"
               }
             ],
             "settings": {
@@ -12204,7 +12221,7 @@
               "prettyRenderInlineFieldsInLivePreview": true,
               "dataviewJsKeyword": "dataviewjs"
             },
-            "length": 11
+            "length": 12
           },
           "etags": {
             "values": [],

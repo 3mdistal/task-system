@@ -4,7 +4,7 @@ import {
   ensureValidStatus,
   ensureValidExcitement,
   ensureValidViability,
-} from "./obsidianHelpers";
+} from "./obsidian/obsidianHelpers";
 
 export function convertObsidianData(data: ObsidianDataViewData) {
   const goals: Goal[] = data.goals.values.map((goalData) => ({

@@ -1,4 +1,4 @@
-import { convertObsidianData } from "../../src/utils/obsidianDataConverter";
+import { convertObsidianData } from "../../src/utils/obsidian/obsidianDataConverter";
 import rawData from "../../src/data/rawData.json";
 import {
   isGoal,
@@ -7,6 +7,11 @@ import {
   isTask,
 } from "../../src/utils/typeGuards";
 import { ObsidianDataViewData } from "../../src/types/Obsidian";
+import {
+  ensureValidStatus,
+  ensureValidExcitement,
+  ensureValidViability,
+} from "../../src/utils/obsidian/obsidianHelpers";
 
 describe("obsidianDataConverter", () => {
   const convertedData = convertObsidianData(rawData as ObsidianDataViewData);
@@ -25,8 +30,9 @@ describe("obsidianDataConverter", () => {
       expect(isGoal(goal)).toBe(true);
       expect(goal).toHaveProperty("id");
       expect(goal).toHaveProperty("name");
-      expect(goal).toHaveProperty("projects");
+      expect(goal).toHaveProperty("projectIds");
       expect(goal).toHaveProperty("status");
+      expect(goal.type).toBe("goal");
     });
   });
 
@@ -42,8 +48,9 @@ describe("obsidianDataConverter", () => {
       expect(project).toHaveProperty("excitement");
       expect(project).toHaveProperty("viability");
       expect(project).toHaveProperty("status");
-      expect(project).toHaveProperty("milestones");
-      expect(project).toHaveProperty("goal");
+      expect(project).toHaveProperty("milestoneIds");
+      expect(project).toHaveProperty("goalId");
+      expect(project.type).toBe("project");
     });
   });
 
@@ -54,10 +61,11 @@ describe("obsidianDataConverter", () => {
       expect(isMilestone(milestone)).toBe(true);
       expect(milestone).toHaveProperty("id");
       expect(milestone).toHaveProperty("name");
-      expect(milestone).toHaveProperty("project");
-      expect(milestone).toHaveProperty("dependencies");
+      expect(milestone).toHaveProperty("projectId");
+      expect(milestone).toHaveProperty("dependencyIds");
       expect(milestone).toHaveProperty("status");
-      expect(milestone).toHaveProperty("tasks");
+      expect(milestone).toHaveProperty("taskIds");
+      expect(milestone.type).toBe("milestone");
     });
   });
 
@@ -70,20 +78,21 @@ describe("obsidianDataConverter", () => {
       expect(task).toHaveProperty("name");
       expect(task).toHaveProperty("status");
       expect(task).toHaveProperty("completionDate");
-      expect(task).toHaveProperty("dependencies");
+      expect(task).toHaveProperty("dependencyIds");
       expect(task).toHaveProperty("duration");
       expect(task).toHaveProperty("timeSpent");
-      expect(task).toHaveProperty("milestone");
+      expect(task).toHaveProperty("milestoneId");
+      expect(task.type).toBe("task");
     });
   });
 
   test("links projects to goals correctly", () => {
     const { goals, projects } = convertedData;
     projects.forEach((project) => {
-      if (project.goal) {
-        const linkedGoal = goals.find((g) => g.id === project.goal!.id);
+      if (project.goalId) {
+        const linkedGoal = goals.find((g) => g.id === project.goalId);
         expect(linkedGoal).toBeDefined();
-        expect(linkedGoal!.projects).toContain(project);
+        expect(linkedGoal!.projectIds).toContain(project.id);
       }
     });
   });
@@ -91,22 +100,55 @@ describe("obsidianDataConverter", () => {
   test("links milestones to projects correctly", () => {
     const { projects, milestones } = convertedData;
     milestones.forEach((milestone) => {
-      const linkedProject = projects.find((p) => p.id === milestone.project.id);
+      const linkedProject = projects.find((p) => p.id === milestone.projectId);
       expect(linkedProject).toBeDefined();
-      expect(linkedProject!.milestones).toContain(milestone);
+      expect(linkedProject!.milestoneIds).toContain(milestone.id);
     });
   });
 
   test("links tasks to milestones correctly", () => {
     const { milestones, tasks } = convertedData;
     tasks.forEach((task) => {
-      if (task.milestone) {
+      if (task.milestoneId) {
         const linkedMilestone = milestones.find(
-          (m) => m.id === task.milestone!.id
+          (m) => m.id === task.milestoneId
         );
         expect(linkedMilestone).toBeDefined();
-        expect(linkedMilestone!.tasks).toContain(task);
+        expect(linkedMilestone!.taskIds).toContain(task.id);
       }
     });
+  });
+});
+
+describe("obsidianHelpers", () => {
+  test("ensureValidStatus returns valid status", () => {
+    expect(ensureValidStatus("raw")).toBe("raw");
+    expect(ensureValidStatus("backlog")).toBe("backlog");
+    expect(ensureValidStatus("planned")).toBe("planned");
+    expect(ensureValidStatus("in-flight")).toBe("in-flight");
+    expect(ensureValidStatus("complete")).toBe("complete");
+    expect(ensureValidStatus("archived")).toBe("archived");
+    expect(ensureValidStatus("invalid")).toBe("backlog");
+    expect(ensureValidStatus(undefined)).toBe("backlog");
+  });
+
+  test("ensureValidExcitement returns valid excitement", () => {
+    expect(ensureValidExcitement(1)).toBe(1);
+    expect(ensureValidExcitement(3)).toBe(3);
+    expect(ensureValidExcitement(5)).toBe(5);
+    expect(ensureValidExcitement(0)).toBe(3);
+    expect(ensureValidExcitement(6)).toBe(3);
+    expect(ensureValidExcitement("invalid")).toBe(3);
+    expect(ensureValidExcitement(undefined)).toBe(3);
+  });
+
+  test("ensureValidViability returns valid viability", () => {
+    expect(ensureValidViability(1)).toBe(1);
+    expect(ensureValidViability(3)).toBe(3);
+    expect(ensureValidViability(5)).toBe(5);
+    expect(ensureValidViability(0)).toBe(3);
+    expect(ensureValidViability(6)).toBe(3);
+    expect(ensureValidViability("invalid")).toBe(3);
+    expect(ensureValidViability(undefined)).toBe(3);
   });
 });

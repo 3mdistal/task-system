@@ -86,8 +86,9 @@ describe("obsidianDataConverter", () => {
     });
   });
 
-  test("Projects are correctly linked to goals", () => {
-    const { projects, goals } = convertedData;
+  test("Entities are correctly linked and invalid references are removed", () => {
+    const { goals, projects, milestones, tasks } = convertedData;
+
     projects.forEach((project) => {
       if (project.goalId) {
         const linkedGoal = goals.find((g) => g.id === project.goalId);
@@ -95,14 +96,44 @@ describe("obsidianDataConverter", () => {
         expect(linkedGoal!.projectIds).toContain(project.id);
       }
     });
+
+    milestones.forEach((milestone) => {
+      if (milestone.projectId) {
+        const linkedProject = projects.find(
+          (p) => p.id === milestone.projectId
+        );
+        expect(linkedProject).toBeDefined();
+        expect(linkedProject!.milestoneIds).toContain(milestone.id);
+      }
+      milestone.dependencyIds.forEach((depId) => {
+        expect(milestones.some((m) => m.id === depId)).toBe(true);
+      });
+    });
+
+    tasks.forEach((task) => {
+      if (task.milestoneId) {
+        const linkedMilestone = milestones.find(
+          (m) => m.id === task.milestoneId
+        );
+        expect(linkedMilestone).toBeDefined();
+        expect(linkedMilestone!.taskIds).toContain(task.id);
+      }
+      task.dependencyIds.forEach((depId) => {
+        expect(tasks.some((t) => t.id === depId)).toBe(true);
+      });
+    });
   });
 
   test("links milestones to projects correctly", () => {
     const { projects, milestones } = convertedData;
     milestones.forEach((milestone) => {
-      const linkedProject = projects.find((p) => p.id === milestone.projectId);
-      expect(linkedProject).toBeDefined();
-      expect(linkedProject!.milestoneIds).toContain(milestone.id);
+      if (milestone.projectId) {
+        const linkedProject = projects.find(
+          (p) => p.id === milestone.projectId
+        );
+        expect(linkedProject).toBeDefined();
+        expect(linkedProject!.milestoneIds).toContain(milestone.id);
+      }
     });
   });
 

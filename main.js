@@ -204,7 +204,10 @@ var optimizeSequence = (projects, goals, milestones, tasks) => {
       items: getUniqueProjects(allTasks, milestones),
       getItemId: (task) => {
         const milestone = milestones.find((m) => m.id === task.milestoneId);
-        return milestone == null ? void 0 : milestone.projectId;
+        if (milestone) {
+          return milestone.projectId;
+        }
+        return void 0;
       }
     },
     {
@@ -317,7 +320,9 @@ var getUniqueProjects = (tasks, milestones) => {
   tasks.forEach((task) => {
     const milestone = milestones.find((m) => m.id === task.milestoneId);
     if (milestone) {
-      projectIds.add(milestone.projectId);
+      if (milestone.projectId) {
+        projectIds.add(milestone.projectId);
+      }
     }
   });
   return projectIds;
@@ -352,77 +357,85 @@ function ensureValidViability(viability) {
   const validViabilities = [1, 2, 3, 4, 5];
   return validViabilities.includes(viability) ? viability : 3;
 }
+function ensureValidReference(referenceId, collection, entityType, parentType, parentId) {
+  if (!referenceId)
+    return void 0;
+  const found = collection.some((item) => item.id === referenceId);
+  if (!found) {
+    console.log(
+      `Warning: ${entityType} ${referenceId} not found for ${parentType} ${parentId}. Removing invalid reference.`
+    );
+    return void 0;
+  }
+  return referenceId;
+}
 
 // src/utils/obsidian/obsidianDataConverter.ts
 function convertObsidianData(data) {
   var _a, _b, _c, _d;
-  console.log("Starting data conversion...");
-  console.log("Input data:", JSON.stringify(data, null, 2));
   const goals = (((_a = data.goals) == null ? void 0 : _a.values) || []).map(convertGoal);
-  console.log(
-    `Converted ${goals.length} goals:`,
-    JSON.stringify(goals, null, 2)
-  );
   const projects = (((_b = data.projects) == null ? void 0 : _b.values) || []).map(convertProject);
-  console.log(
-    `Converted ${projects.length} projects:`,
-    JSON.stringify(projects, null, 2)
-  );
   const milestones = (((_c = data.milestones) == null ? void 0 : _c.values) || []).map(
     convertMilestone
   );
-  console.log(
-    `Converted ${milestones.length} milestones:`,
-    JSON.stringify(milestones, null, 2)
-  );
   const tasks = (((_d = data.tasks) == null ? void 0 : _d.values) || []).map(convertTask);
-  console.log(
-    `Converted ${tasks.length} tasks:`,
-    JSON.stringify(tasks, null, 2)
-  );
-  console.log("Linking projects to goals...");
   projects.forEach((project) => {
+    project.goalId = ensureValidReference(
+      project.goalId,
+      goals,
+      "Goal",
+      "Project",
+      project.id
+    );
     if (project.goalId) {
       const goal = goals.find((g) => g.id === project.goalId);
-      if (goal) {
+      if (goal)
         goal.projectIds.push(project.id);
-        console.log(`Linked project ${project.id} to goal ${goal.id}`);
-      } else {
-        console.log(`Warning: Goal not found for project ${project.id}`);
-      }
     }
   });
-  console.log("Linking milestones to projects...");
   milestones.forEach((milestone) => {
-    const project = projects.find((p) => p.id === milestone.projectId);
-    if (project) {
-      project.milestoneIds.push(milestone.id);
-      console.log(`Linked milestone ${milestone.id} to project ${project.id}`);
-    } else {
-      console.log(`Warning: Project not found for milestone ${milestone.id}`);
+    milestone.projectId = ensureValidReference(
+      milestone.projectId,
+      projects,
+      "Project",
+      "Milestone",
+      milestone.id
+    );
+    if (milestone.projectId) {
+      const project = projects.find((p) => p.id === milestone.projectId);
+      if (project)
+        project.milestoneIds.push(milestone.id);
     }
+    milestone.dependencyIds = milestone.dependencyIds.filter(
+      (depId) => ensureValidReference(
+        depId,
+        milestones,
+        "Milestone",
+        "Milestone",
+        milestone.id
+      )
+    );
   });
-  console.log("Linking tasks to milestones...");
   tasks.forEach((task) => {
+    task.milestoneId = ensureValidReference(
+      task.milestoneId,
+      milestones,
+      "Milestone",
+      "Task",
+      task.id
+    );
     if (task.milestoneId) {
       const milestone = milestones.find((m) => m.id === task.milestoneId);
-      if (milestone) {
+      if (milestone)
         milestone.taskIds.push(task.id);
-        console.log(`Linked task ${task.id} to milestone ${milestone.id}`);
-      } else {
-        console.log(`Warning: Milestone not found for task ${task.id}`);
-      }
     }
+    task.dependencyIds = task.dependencyIds.filter(
+      (depId) => ensureValidReference(depId, tasks, "Task", "Task", task.id)
+    );
   });
-  console.log("Data conversion completed.");
-  console.log(
-    "Final converted data:",
-    JSON.stringify({ goals, projects, milestones, tasks }, null, 2)
-  );
   return { goals, projects, milestones, tasks };
 }
 function convertGoal(obsidianGoal) {
-  console.log(`Converting goal: ${obsidianGoal.name}`);
   return {
     type: "goal",
     id: obsidianGoal.id || "",
@@ -432,47 +445,44 @@ function convertGoal(obsidianGoal) {
   };
 }
 function convertProject(obsidianProject) {
-  var _a, _b, _c;
-  console.log(`Converting project: ${(_a = obsidianProject.file) == null ? void 0 : _a.name}`);
+  var _a;
   return {
     type: "project",
     id: obsidianProject.id || "",
-    name: ((_b = obsidianProject.file) == null ? void 0 : _b.name) || "",
+    name: obsidianProject.name || "",
     deadline: obsidianProject.deadline ? new Date(obsidianProject.deadline) : void 0,
     deadlineType: obsidianProject.deadlineType || void 0,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: ((_c = obsidianProject.goal) == null ? void 0 : _c.path) || void 0
+    goalId: ((_a = obsidianProject.goal) == null ? void 0 : _a.path) || void 0
   };
 }
 function convertMilestone(obsidianMilestone) {
-  var _a, _b, _c, _d;
-  console.log(`Converting milestone: ${(_a = obsidianMilestone.file) == null ? void 0 : _a.name}`);
+  var _a, _b;
   return {
     type: "milestone",
     id: obsidianMilestone.id || "",
-    name: ((_b = obsidianMilestone.file) == null ? void 0 : _b.name) || "",
-    projectId: ((_c = obsidianMilestone.project) == null ? void 0 : _c.path) || "",
-    dependencyIds: ((_d = obsidianMilestone.dependencies) == null ? void 0 : _d.map((dep) => dep.path || "")) || [],
+    name: obsidianMilestone.name || "",
+    projectId: ((_a = obsidianMilestone.project) == null ? void 0 : _a.path) || void 0,
+    dependencyIds: ((_b = obsidianMilestone.dependencies) == null ? void 0 : _b.map((dep) => dep.path || "")) || [],
     status: ensureValidStatus(obsidianMilestone.status),
     taskIds: []
   };
 }
 function convertTask(obsidianTask) {
-  var _a, _b, _c, _d;
-  console.log(`Converting task: ${(_a = obsidianTask.file) == null ? void 0 : _a.name}`);
+  var _a, _b;
   return {
     type: "task",
     id: obsidianTask.id || "",
-    name: ((_b = obsidianTask.file) == null ? void 0 : _b.name) || "",
+    name: obsidianTask.name || "",
     status: ensureValidStatus(obsidianTask.status),
     completionDate: void 0,
-    dependencyIds: ((_c = obsidianTask.dependencies) == null ? void 0 : _c.map((dep) => dep.path || "")) || [],
+    dependencyIds: ((_a = obsidianTask.dependencies) == null ? void 0 : _a.map((dep) => dep.path || "")) || [],
     duration: obsidianTask.duration || 0,
     timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
-    milestoneId: ((_d = obsidianTask.milestone) == null ? void 0 : _d.path) || void 0
+    milestoneId: ((_b = obsidianTask.milestone) == null ? void 0 : _b.path) || void 0
   };
 }
 

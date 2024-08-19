@@ -1,7 +1,13 @@
+import { Status } from "./";
+
 export interface Task {
+  id: string;
   name: string;
+  status: Status;
+  completionDate?: Date;
+  dependencyIds: string[];
   duration: number;
-  milestone?: string;
-  soft_deadline?: string;
-  hard_deadline?: string;
+  timeSpent: number;
+  milestoneId?: string;
+  type: "task";
 }

@@ -1,8 +1,11 @@
+import type { Status } from "./";
+
 export interface Milestone {
+  id: string;
   name: string;
-  viability: number;
-  excitement: number;
-  project: string;
-  soft_deadline?: string;
-  hard_deadline?: string;
+  projectId: string;
+  dependencyIds: string[];
+  status: Status;
+  taskIds: string[];
+  type: "milestone";
 }

@@ -1,50 +1,66 @@
-import { Milestone } from "../types";
+import type { Project, Task, OptimizationResult } from "../types";
 
 export const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export const USABLE_HOURS_PER_DAY = 3;
 
 export const getDaysUntilDeadline = (
-  milestone: Milestone,
+  project: Project,
   currentDate: Date = new Date()
 ): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
+  const { deadline } = project;
+
+  if (!deadline) {
     return Number.MAX_SAFE_INTEGER;
   }
 
-  const diffTime = deadline.getTime() - currentDate.getTime();
+  // Use UTC to avoid DST issues
+  const deadlineUTC = Date.UTC(
+    deadline.getUTCFullYear(),
+    deadline.getUTCMonth(),
+    deadline.getUTCDate()
+  );
+  const currentUTC = Date.UTC(
+    currentDate.getUTCFullYear(),
+    currentDate.getUTCMonth(),
+    currentDate.getUTCDate()
+  );
+  const diffTime = deadlineUTC - currentUTC;
   const diffDays = diffTime / MS_PER_DAY;
-
-  // If the difference is less than one day and positive, return 0
-  if (diffDays > 0 && diffDays < 1) {
-    return 0;
-  }
 
   return Math.floor(diffDays);
 };
 
 export const getHoursUntilDeadline = (
-  milestone: Milestone,
+  project: Project,
   date: Date = new Date()
 ): number => {
-  const deadline = new Date(
-    milestone.hard_deadline || milestone.soft_deadline || ""
-  );
-  if (isNaN(deadline.getTime())) {
+  const { deadline } = project;
+  if (!deadline) {
     return Number.MAX_SAFE_INTEGER;
   }
 
+  // Use getTime() to get milliseconds since epoch, which accounts for time zones and DST
   const diffTime = deadline.getTime() - date.getTime();
   const diffHours = diffTime / (1000 * 60 * 60);
 
-  // If the difference is less than one day and positive, return 0
-  if (diffHours > 0 && diffHours < 24) {
-    return 0;
+  // Convert actual hours to "usable" hours
+  const usableHours = diffHours * (USABLE_HOURS_PER_DAY / 24);
+
+  // For very small positive differences, always return 1
+  if (usableHours > 0 && usableHours < 1) {
+    return 1;
   }
 
-  return Math.floor(diffHours * (USABLE_HOURS_PER_DAY / 24));
+  // Round to the nearest usable hour, but never round up to the next day
+  return (
+    Math.sign(usableHours) *
+    (usableHours >= 0
+      ? Math.min(
+          Math.floor(Math.abs(usableHours)),
+          Math.floor(Math.abs(diffHours) * (USABLE_HOURS_PER_DAY / 24))
+        )
+      : Math.ceil(Math.abs(usableHours)))
+  );
 };
 
 export const addDays = (
@@ -52,10 +68,52 @@ export const addDays = (
   currentDate: Date
 ): { date: Date; hoursUsed: number } => {
   const daysToAdd = Math.floor(duration / USABLE_HOURS_PER_DAY);
+  const hoursUsed = duration % USABLE_HOURS_PER_DAY;
+
   const newDate = new Date(currentDate);
-  newDate.setDate(newDate.getDate() + daysToAdd);
+  newDate.setUTCDate(newDate.getUTCDate() + daysToAdd);
+
   return {
     date: newDate,
-    hoursUsed: duration % USABLE_HOURS_PER_DAY,
+    hoursUsed,
   };
 };
+
+export function checkDeadlineStatus(
+  completedTasks: Task[],
+  projects: Project[]
+): OptimizationResult["deadlineStatus"] {
+  const missedHardDeadlines: string[] = [];
+  const missedSoftDeadlines: string[] = [];
+
+  projects.forEach((project) => {
+    if (project.deadline) {
+      const projectTasks = completedTasks.filter(
+        (task) =>
+          task.milestoneId && project.milestoneIds.includes(task.milestoneId)
+      );
+      const lastTaskCompletionDate = Math.max(
+        ...projectTasks.map((task) => task.completionDate?.getTime() || 0)
+      );
+
+      if (lastTaskCompletionDate > project.deadline.getTime()) {
+        if (project.deadlineType === "hard") {
+          missedHardDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        } else {
+          missedSoftDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        }
+      }
+    }
+  });
+
+  return {
+    allHardDeadlinesMet: missedHardDeadlines.length === 0,
+    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
+    missedHardDeadlines,
+    missedSoftDeadlines,
+  };
+}

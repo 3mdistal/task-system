@@ -4,7 +4,6 @@ import { simulateTaskSequence } from "./services/simulationService";
 import { convertObsidianData } from "./utils/obsidian/obsidianDataConverter";
 import { checkDeadlineStatus } from "./utils/dateUtils";
 import { calculateCrunchInfo } from "./utils/crunchUtils";
-import rawData from "./data/rawData.json";
 
 export function optimizeTasks(
   rawData: ObsidianDataViewData,

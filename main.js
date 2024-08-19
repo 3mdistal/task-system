@@ -355,10 +355,13 @@ function ensureValidViability(viability) {
 
 // src/utils/obsidian/obsidianDataConverter.ts
 function convertObsidianData(data) {
-  const goals = data.goals.values.map(convertGoal);
-  const projects = data.projects.values.map(convertProject);
-  const milestones = data.milestones.values.map(convertMilestone);
-  const tasks = data.tasks.values.map(convertTask);
+  var _a, _b, _c, _d;
+  const goals = (((_a = data.goals) == null ? void 0 : _a.values) || []).map(convertGoal);
+  const projects = (((_b = data.projects) == null ? void 0 : _b.values) || []).map(convertProject);
+  const milestones = (((_c = data.milestones) == null ? void 0 : _c.values) || []).map(
+    convertMilestone
+  );
+  const tasks = (((_d = data.tasks) == null ? void 0 : _d.values) || []).map(convertTask);
   projects.forEach((project) => {
     if (project.goalId) {
       const goal = goals.find((g) => g.id === project.goalId);
@@ -384,52 +387,54 @@ function convertObsidianData(data) {
   return { goals, projects, milestones, tasks };
 }
 function convertGoal(obsidianGoal) {
+  var _a, _b;
   return {
     type: "goal",
-    id: obsidianGoal.file.path,
-    name: obsidianGoal.file.name,
+    id: ((_a = obsidianGoal.file) == null ? void 0 : _a.path) || "",
+    name: ((_b = obsidianGoal.file) == null ? void 0 : _b.name) || "",
     projectIds: [],
     status: ensureValidStatus(obsidianGoal.status)
   };
 }
 function convertProject(obsidianProject) {
+  var _a, _b, _c;
   return {
     type: "project",
-    id: obsidianProject.file.path,
-    name: obsidianProject.file.name,
+    id: ((_a = obsidianProject.file) == null ? void 0 : _a.path) || "",
+    name: ((_b = obsidianProject.file) == null ? void 0 : _b.name) || "",
     deadline: obsidianProject.deadline ? new Date(obsidianProject.deadline) : void 0,
-    deadlineType: obsidianProject.deadlineType,
+    deadlineType: obsidianProject.deadlineType || void 0,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: obsidianProject.goal ? obsidianProject.goal.path : void 0
+    goalId: ((_c = obsidianProject.goal) == null ? void 0 : _c.path) || void 0
   };
 }
 function convertMilestone(obsidianMilestone) {
-  var _a;
+  var _a, _b, _c, _d;
   return {
     type: "milestone",
-    id: obsidianMilestone.file.path,
-    name: obsidianMilestone.file.name,
-    projectId: obsidianMilestone.project.path,
-    dependencyIds: ((_a = obsidianMilestone.dependencies) == null ? void 0 : _a.map((dep) => dep.path)) || [],
+    id: ((_a = obsidianMilestone.file) == null ? void 0 : _a.path) || "",
+    name: ((_b = obsidianMilestone.file) == null ? void 0 : _b.name) || "",
+    projectId: ((_c = obsidianMilestone.project) == null ? void 0 : _c.path) || "",
+    dependencyIds: ((_d = obsidianMilestone.dependencies) == null ? void 0 : _d.map((dep) => dep.path || "")) || [],
     status: ensureValidStatus(obsidianMilestone.status),
     taskIds: []
   };
 }
 function convertTask(obsidianTask) {
-  var _a;
+  var _a, _b, _c, _d;
   return {
     type: "task",
-    id: obsidianTask.file.path,
-    name: obsidianTask.file.name,
+    id: ((_a = obsidianTask.file) == null ? void 0 : _a.path) || "",
+    name: ((_b = obsidianTask.file) == null ? void 0 : _b.name) || "",
     status: ensureValidStatus(obsidianTask.status),
     completionDate: void 0,
-    dependencyIds: ((_a = obsidianTask.dependencies) == null ? void 0 : _a.map((dep) => dep.path)) || [],
+    dependencyIds: ((_c = obsidianTask.dependencies) == null ? void 0 : _c.map((dep) => dep.path || "")) || [],
     duration: obsidianTask.duration || 0,
     timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
-    milestoneId: obsidianTask.milestone ? obsidianTask.milestone.path : void 0
+    milestoneId: ((_d = obsidianTask.milestone) == null ? void 0 : _d.path) || void 0
   };
 }
 
@@ -518,9 +523,20 @@ function checkDeadlines(deadlineStatus) {
 var OptimizeTasksPlugin = class extends import_obsidian.Plugin {
   async onload() {
     console.log("Loading OptimizeTasks plugin");
-    window.optimizeTasks = (data) => {
-      return optimizeTasks(data);
-    };
+    try {
+      this.addCommand({
+        id: "test-optimize-tasks",
+        name: "Test Optimize Tasks",
+        callback: () => {
+          new import_obsidian.Notice("OptimizeTasks plugin is working!");
+        }
+      });
+      window.optimizeTasks = (data) => {
+        return optimizeTasks(data);
+      };
+    } catch (error) {
+      console.error("Error loading OptimizeTasks plugin:", error);
+    }
   }
   onunload() {
     console.log("Unloading OptimizeTasks plugin");

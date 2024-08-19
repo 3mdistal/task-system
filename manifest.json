@@ -1,10 +1,11 @@
 {
-  "id": "task-optimizer",
+  "id": "my-task-optimizer",
   "name": "Task Optimizer",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
   "description": "Optimize tasks using custom algorithms",
   "author": "Alice Moore",
   "authorUrl": "https://alicealexandra.com",
+  "fundingUrl": "https://alicealexandra.com",
   "isDesktopOnly": false
 }

@@ -18,10 +18,12 @@ export function convertObsidianData(data: ObsidianDataViewData): {
   milestones: Milestone[];
   tasks: Task[];
 } {
-  const goals: Goal[] = data.goals.values.map(convertGoal);
-  const projects: Project[] = data.projects.values.map(convertProject);
-  const milestones: Milestone[] = data.milestones.values.map(convertMilestone);
-  const tasks: Task[] = data.tasks.values.map(convertTask);
+  const goals: Goal[] = (data.goals?.values || []).map(convertGoal);
+  const projects: Project[] = (data.projects?.values || []).map(convertProject);
+  const milestones: Milestone[] = (data.milestones?.values || []).map(
+    convertMilestone
+  );
+  const tasks: Task[] = (data.tasks?.values || []).map(convertTask);
 
   // Link projects to goals
   projects.forEach((project) => {
@@ -57,8 +59,8 @@ export function convertObsidianData(data: ObsidianDataViewData): {
 function convertGoal(obsidianGoal: ObsidianGoal): Goal {
   return {
     type: "goal",
-    id: obsidianGoal.file.path,
-    name: obsidianGoal.file.name,
+    id: obsidianGoal.file?.path || "",
+    name: obsidianGoal.file?.name || "",
     projectIds: [],
     status: ensureValidStatus(obsidianGoal.status),
   };
@@ -67,27 +69,28 @@ function convertGoal(obsidianGoal: ObsidianGoal): Goal {
 function convertProject(obsidianProject: ObsidianProject): Project {
   return {
     type: "project",
-    id: obsidianProject.file.path,
-    name: obsidianProject.file.name,
+    id: obsidianProject.file?.path || "",
+    name: obsidianProject.file?.name || "",
     deadline: obsidianProject.deadline
       ? new Date(obsidianProject.deadline)
       : undefined,
-    deadlineType: obsidianProject.deadlineType,
+    deadlineType: obsidianProject.deadlineType || undefined,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: obsidianProject.goal ? obsidianProject.goal.path : undefined,
+    goalId: obsidianProject.goal?.path || undefined,
   };
 }
 
 function convertMilestone(obsidianMilestone: ObsidianMilestone): Milestone {
   return {
     type: "milestone",
-    id: obsidianMilestone.file.path,
-    name: obsidianMilestone.file.name,
-    projectId: obsidianMilestone.project.path,
-    dependencyIds: obsidianMilestone.dependencies?.map((dep) => dep.path) || [],
+    id: obsidianMilestone.file?.path || "",
+    name: obsidianMilestone.file?.name || "",
+    projectId: obsidianMilestone.project?.path || "",
+    dependencyIds:
+      obsidianMilestone.dependencies?.map((dep) => dep.path || "") || [],
     status: ensureValidStatus(obsidianMilestone.status),
     taskIds: [],
   };
@@ -96,15 +99,14 @@ function convertMilestone(obsidianMilestone: ObsidianMilestone): Milestone {
 function convertTask(obsidianTask: ObsidianTask): Task {
   return {
     type: "task",
-    id: obsidianTask.file.path,
-    name: obsidianTask.file.name,
+    id: obsidianTask.file?.path || "",
+    name: obsidianTask.file?.name || "",
     status: ensureValidStatus(obsidianTask.status),
     completionDate: undefined,
-    dependencyIds: obsidianTask.dependencies?.map((dep) => dep.path) || [],
+    dependencyIds:
+      obsidianTask.dependencies?.map((dep) => dep.path || "") || [],
     duration: obsidianTask.duration || 0,
     timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
-    milestoneId: obsidianTask.milestone
-      ? obsidianTask.milestone.path
-      : undefined,
+    milestoneId: obsidianTask.milestone?.path || undefined,
   };
 }

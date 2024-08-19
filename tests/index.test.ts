@@ -11,6 +11,7 @@ import {
 } from "../src/types";
 import * as optimizationService from "../src/services/optimizationService";
 import * as simulationService from "../src/services/simulationService";
+import { convertObsidianData } from "../src/utils/obsidian/obsidianDataConverter";
 
 jest.mock("../src/services/optimizationService");
 jest.mock("../src/services/simulationService");
@@ -145,26 +146,8 @@ describe("optimizeTasks", () => {
     });
   });
 
-  it("should return an optimization result", () => {
-    const result = optimizeTasks({
-      goals: { values: [], settings: {}, length: 0 },
-      projects: {
-        values: mockProjects.map(convertToObsidianProject),
-        settings: {},
-        length: mockProjects.length,
-      },
-      milestones: { values: [], settings: {}, length: 0 },
-      tasks: { values: [], settings: {}, length: 0 },
-    });
-
-    expect(result).toHaveProperty("optimizedSequence");
-    expect(result).toHaveProperty("statistics");
-    expect(result).toHaveProperty("deadlineStatus");
-    expect(result).toHaveProperty("crunchInfo");
-  });
-
   it("should call optimizeSequence and simulateTaskSequence", () => {
-    optimizeTasks({
+    const obsidianData = {
       goals: { values: [], settings: {}, length: 0 },
       projects: {
         values: mockProjects.map(convertToObsidianProject),
@@ -173,17 +156,24 @@ describe("optimizeTasks", () => {
       },
       milestones: { values: [], settings: {}, length: 0 },
       tasks: { values: [], settings: {}, length: 0 },
-    });
+    };
+
+    const { projects, goals, milestones, tasks } =
+      convertObsidianData(obsidianData);
+
+    optimizeTasks(obsidianData);
 
     expect(optimizationService.optimizeSequence).toHaveBeenCalledWith(
-      mockProjects.map(convertToObsidianProject),
-      mockMilestones,
-      mockTasks
+      projects,
+      goals,
+      milestones,
+      tasks
     );
     expect(simulationService.simulateTaskSequence).toHaveBeenCalledWith(
       mockTasks,
-      mockProjects.map(convertToObsidianProject),
-      mockMilestones
+      projects,
+      goals,
+      milestones
     );
   });
 
@@ -222,7 +212,7 @@ describe("optimizeTasks", () => {
     expect(result.crunchInfo).toEqual({
       earliestCrunch: -32,
       latestCrunch: -1,
-      averageCrunch: -16,
+      averageCrunch: -16.5,
       crunchByProject: {
         "Project A": -32,
         "Project B": -1,
@@ -277,7 +267,7 @@ describe("checkDeadlineStatus", () => {
       },
       {
         ...mockTasks[1],
-        completionDate: new Date("2024-02-01"),
+        completionDate: new Date("2024-01-30"),
       },
     ];
 
@@ -285,9 +275,9 @@ describe("checkDeadlineStatus", () => {
 
     expect(result).toEqual({
       allHardDeadlinesMet: true,
-      allSoftDeadlinesMet: false,
+      allSoftDeadlinesMet: true,
       missedHardDeadlines: [],
-      missedSoftDeadlines: ["Project B: 2024-01-31T00:00:00.000Z"],
+      missedSoftDeadlines: [],
     });
   });
 

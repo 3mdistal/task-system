@@ -113,7 +113,7 @@ describe("calculateCrunchInfo", () => {
     expect(result).toEqual({
       earliestCrunch: -1,
       latestCrunch: 4,
-      averageCrunch: 2,
+      averageCrunch: 1.5,
       crunchByProject: {
         "Project 1": -1,
         "Project 2": 4,
@@ -159,7 +159,7 @@ describe("calculateCrunchInfo", () => {
     expect(result).toEqual({
       earliestCrunch: 9,
       latestCrunch: 14,
-      averageCrunch: 12,
+      averageCrunch: 11.5,
       crunchByProject: {
         "Project 1": 9,
         "Project 3": 14,

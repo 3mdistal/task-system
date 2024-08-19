@@ -83,35 +83,37 @@ export function checkDeadlineStatus(
   completedTasks: Task[],
   projects: Project[]
 ): OptimizationResult["deadlineStatus"] {
-  const status = {
-    allHardDeadlinesMet: true,
-    allSoftDeadlinesMet: true,
-    missedHardDeadlines: [] as string[],
-    missedSoftDeadlines: [] as string[],
-  };
+  const missedHardDeadlines: string[] = [];
+  const missedSoftDeadlines: string[] = [];
 
-  completedTasks.forEach((task) => {
-    if (task.milestoneId) {
-      const project = projects.find((p) =>
-        p.milestoneIds.includes(task.milestoneId!)
+  projects.forEach((project) => {
+    if (project.deadline) {
+      const projectTasks = completedTasks.filter(
+        (task) =>
+          task.milestoneId && project.milestoneIds.includes(task.milestoneId)
       );
-      if (project && project.deadline && task.completionDate) {
-        if (task.completionDate > project.deadline) {
-          if (project.deadlineType === "hard") {
-            status.allHardDeadlinesMet = false;
-            status.missedHardDeadlines.push(
-              `${project.name}: ${project.deadline.toISOString()}`
-            );
-          } else {
-            status.allSoftDeadlinesMet = false;
-            status.missedSoftDeadlines.push(
-              `${project.name}: ${project.deadline.toISOString()}`
-            );
-          }
+      const lastTaskCompletionDate = Math.max(
+        ...projectTasks.map((task) => task.completionDate?.getTime() || 0)
+      );
+
+      if (lastTaskCompletionDate > project.deadline.getTime()) {
+        if (project.deadlineType === "hard") {
+          missedHardDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        } else {
+          missedSoftDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
         }
       }
     }
   });
 
-  return status;
+  return {
+    allHardDeadlinesMet: missedHardDeadlines.length === 0,
+    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
+    missedHardDeadlines,
+    missedSoftDeadlines,
+  };
 }

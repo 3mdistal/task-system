@@ -76,6 +76,3 @@ function checkDeadlines(
     );
   }
 }
-
-const data = rawData as ObsidianDataViewData;
-optimizeTasks(data);

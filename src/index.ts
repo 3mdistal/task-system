@@ -7,16 +7,14 @@ import { calculateCrunchInfo } from "./utils/crunchUtils";
 import rawData from "./data/rawData.json";
 
 export function optimizeTasks(
-  rawData: ObsidianDataViewData
+  rawData: ObsidianDataViewData,
+  convertData = convertObsidianData,
+  optimize = optimizeSequence,
+  simulate = simulateTaskSequence
 ): OptimizationResult {
-  const { projects, goals, milestones, tasks } = convertObsidianData(rawData);
-  const bestSequence = optimizeSequence(projects, goals, milestones, tasks);
-  const result = simulateTaskSequence(
-    bestSequence,
-    projects,
-    goals,
-    milestones
-  );
+  const { projects, goals, milestones, tasks } = convertData(rawData);
+  const bestSequence = optimize(projects, goals, milestones, tasks);
+  const result = simulate(bestSequence, projects, goals, milestones);
 
   if (!result || !result.completedTasks || !result.endDate) {
     console.error("Invalid simulation result:", result);

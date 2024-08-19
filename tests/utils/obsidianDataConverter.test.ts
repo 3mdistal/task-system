@@ -86,8 +86,8 @@ describe("obsidianDataConverter", () => {
     });
   });
 
-  test("links projects to goals correctly", () => {
-    const { goals, projects } = convertedData;
+  test("Projects are correctly linked to goals", () => {
+    const { projects, goals } = convertedData;
     projects.forEach((project) => {
       if (project.goalId) {
         const linkedGoal = goals.find((g) => g.id === project.goalId);
@@ -150,5 +150,127 @@ describe("obsidianHelpers", () => {
     expect(ensureValidViability(6)).toBe(3);
     expect(ensureValidViability("invalid")).toBe(3);
     expect(ensureValidViability(undefined)).toBe(3);
+  });
+});
+
+describe("obsidianDataConverter edge cases", () => {
+  test("handles completely empty input data", () => {
+    const emptyData = {} as ObsidianDataViewData;
+    const result = convertObsidianData(emptyData);
+    expect(result.goals).toEqual([]);
+    expect(result.projects).toEqual([]);
+    expect(result.milestones).toEqual([]);
+    expect(result.tasks).toEqual([]);
+  });
+
+  test("handles input with empty arrays", () => {
+    const emptyArraysData: ObsidianDataViewData = {
+      goals: { values: [], settings: {}, length: 0 },
+      projects: { values: [], settings: {}, length: 0 },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    };
+    const result = convertObsidianData(emptyArraysData);
+    expect(result.goals).toEqual([]);
+    expect(result.projects).toEqual([]);
+    expect(result.milestones).toEqual([]);
+    expect(result.tasks).toEqual([]);
+  });
+
+  test("handles partial data with only goals", () => {
+    const partialData: Partial<ObsidianDataViewData> = {
+      goals: {
+        values: [
+          {
+            name: "Goal 1",
+            id: "goal1",
+            type: "goal",
+            status: "planned",
+          },
+        ],
+        settings: {},
+        length: 1,
+      },
+    };
+    const result = convertObsidianData(partialData as ObsidianDataViewData);
+    expect(result.goals.length).toBe(1);
+    expect(result.goals[0].name).toBe("Goal 1");
+    expect(result.projects).toEqual([]);
+    expect(result.milestones).toEqual([]);
+    expect(result.tasks).toEqual([]);
+  });
+
+  test("handles partial data with only projects", () => {
+    const partialData: Partial<ObsidianDataViewData> = {
+      projects: {
+        values: [
+          {
+            name: "Project 1",
+            id: "project1",
+            type: "project",
+            status: "planned",
+            excitement: 3,
+            viability: 4,
+          },
+        ],
+        settings: {},
+        length: 1,
+      },
+    };
+    const result = convertObsidianData(partialData as ObsidianDataViewData);
+    expect(result.goals).toEqual([]);
+    expect(result.projects.length).toBe(1);
+    expect(result.projects[0].name).toBe("Project 1");
+    expect(result.milestones).toEqual([]);
+    expect(result.tasks).toEqual([]);
+  });
+
+  test("handles partial data with only milestones", () => {
+    const partialData: Partial<ObsidianDataViewData> = {
+      milestones: {
+        values: [
+          {
+            name: "Milestone 1",
+            id: "milestone1",
+            type: "milestone",
+            status: "planned",
+            project: { path: "nonexistent-project", type: "file" },
+          },
+        ],
+        settings: {},
+        length: 1,
+      },
+    };
+    const result = convertObsidianData(partialData as ObsidianDataViewData);
+    expect(result.goals).toEqual([]);
+    expect(result.projects).toEqual([]);
+    expect(result.milestones.length).toBe(1);
+    expect(result.milestones[0].name).toBe("Milestone 1");
+    expect(result.tasks).toEqual([]);
+  });
+
+  test("handles partial data with only tasks", () => {
+    const partialData: Partial<ObsidianDataViewData> = {
+      tasks: {
+        values: [
+          {
+            name: "Task 1",
+            id: "task1",
+            type: "task",
+            status: "planned",
+            duration: 2,
+            timeSpent: 0,
+          },
+        ],
+        settings: {},
+        length: 1,
+      },
+    };
+    const result = convertObsidianData(partialData as ObsidianDataViewData);
+    expect(result.goals).toEqual([]);
+    expect(result.projects).toEqual([]);
+    expect(result.milestones).toEqual([]);
+    expect(result.tasks.length).toBe(1);
+    expect(result.tasks[0].name).toBe("Task 1");
   });
 });

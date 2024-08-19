@@ -23,7 +23,6 @@ describe("optimizationService", () => {
     status: "planned",
     timeSpent: 0,
     milestoneId: undefined,
-    goalId,
     type: "task",
   });
 

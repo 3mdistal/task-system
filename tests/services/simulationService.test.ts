@@ -1,25 +1,37 @@
 import { simulateTaskSequence } from "../../src/services/simulationService";
-import { Task, Project, Milestone } from "../../src/types";
+import { Goal, Milestone, Project, Task } from "../../src/types";
 import { addDays } from "../../src/utils/dateUtils";
 
 describe("simulationService", () => {
+  const mockGoal: Goal = {
+    id: "goal1",
+    name: "Test Goal",
+    projectIds: ["project1"],
+    status: "planned",
+    type: "goal",
+  };
+
   const mockProject: Project = {
+    id: "project1",
     name: "Test Project",
     deadline: new Date("2024-12-31"),
     deadlineType: "soft",
     excitement: 3,
     viability: 4,
-    goal: { name: "Test Goal", projects: () => [], status: "planned" },
-    milestones: () => [],
+    goalId: "goal1",
+    milestoneIds: ["milestone1"],
     status: "planned",
+    type: "project",
   };
 
   const mockMilestone: Milestone = {
+    id: "milestone1",
     name: "Test Milestone",
-    project: mockProject,
+    projectId: "project1",
+    dependencyIds: [],
     status: "planned",
-    dependencies: [],
-    tasks: () => [],
+    taskIds: [],
+    type: "milestone",
   };
 
   const createMockTask = (
@@ -27,12 +39,14 @@ describe("simulationService", () => {
     duration: number,
     dependencies: Task[] = []
   ): Task => ({
+    id: `task-${name}`,
     name,
     duration,
     timeSpent: 0,
     status: "planned",
-    milestone: mockMilestone,
-    dependencies,
+    milestoneId: "milestone1",
+    dependencyIds: dependencies.map((d) => d.id),
+    type: "task",
   });
 
   it("should simulate a simple sequence of tasks", () => {
@@ -42,7 +56,12 @@ describe("simulationService", () => {
       createMockTask("Task 3", 4),
     ];
 
-    const result = simulateTaskSequence(tasks);
+    const result = simulateTaskSequence(
+      tasks,
+      [mockProject],
+      [mockGoal],
+      [mockMilestone]
+    );
 
     console.log(
       "Completed tasks:",
@@ -62,7 +81,12 @@ describe("simulationService", () => {
     const task2 = createMockTask("Task 2", 3, [task1]);
     const task3 = createMockTask("Task 3", 4, [task2]);
 
-    const result = simulateTaskSequence([task3, task2, task1]);
+    const result = simulateTaskSequence(
+      [task3, task2, task1],
+      [mockProject],
+      [mockGoal],
+      [mockMilestone]
+    );
 
     console.log(
       "Completed tasks:",
@@ -86,12 +110,15 @@ describe("simulationService", () => {
     };
     const mockMilestoneWithDeadline: Milestone = {
       ...mockMilestone,
-      project: mockProjectWithDeadline,
+      projectId: mockProjectWithDeadline.id,
     };
 
-    const createMockTaskWithDeadline = (name: string, duration: number) => ({
+    const createMockTaskWithDeadline = (
+      name: string,
+      duration: number
+    ): Task => ({
       ...createMockTask(name, duration),
-      milestone: mockMilestoneWithDeadline,
+      milestoneId: mockMilestoneWithDeadline.id,
     });
 
     const tasks = [
@@ -100,7 +127,12 @@ describe("simulationService", () => {
       createMockTaskWithDeadline("Task 3", 3),
     ];
 
-    const result = simulateTaskSequence(tasks);
+    const result = simulateTaskSequence(
+      tasks,
+      [mockProjectWithDeadline],
+      [mockGoal],
+      [mockMilestoneWithDeadline]
+    );
 
     console.log(
       "Completed tasks:",
@@ -121,18 +153,24 @@ describe("simulationService", () => {
 
   it("should calculate correct score based on task completion", () => {
     const task1 = createMockTask("Task 1", 2);
-    const task2 = {
+    const task2: Task = {
       ...createMockTask("Task 2", 3),
-      status: "in-flight" as const,
+      status: "in-flight",
     };
 
-    const result = simulateTaskSequence([task1, task2]);
+    const result = simulateTaskSequence(
+      [task1, task2],
+      [mockProject],
+      [mockGoal],
+      [mockMilestone]
+    );
 
     expect(result.score).toBeGreaterThan(0);
     // The in-flight task should contribute more to the score
+    const milestone = mockMilestone;
+    const project = mockProject;
     expect(result.score).toBeGreaterThan(
-      result.completedTasks[0].milestone!.project.excitement * 20 +
-        result.completedTasks[0].milestone!.project.viability * 20
+      project.excitement * 20 + project.viability * 20
     );
   });
 });

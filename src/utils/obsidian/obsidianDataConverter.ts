@@ -10,6 +10,7 @@ import {
   ensureValidStatus,
   ensureValidExcitement,
   ensureValidViability,
+  ensureValidReference,
 } from "./obsidianHelpers";
 
 export function convertObsidianData(data: ObsidianDataViewData): {
@@ -25,32 +26,58 @@ export function convertObsidianData(data: ObsidianDataViewData): {
   );
   const tasks: Task[] = (data.tasks?.values || []).map(convertTask);
 
-  // Link projects to goals
   projects.forEach((project) => {
+    project.goalId = ensureValidReference(
+      project.goalId,
+      goals,
+      "Goal",
+      "Project",
+      project.id
+    );
     if (project.goalId) {
       const goal = goals.find((g) => g.id === project.goalId);
-      if (goal) {
-        goal.projectIds.push(project.id);
-      }
+      if (goal) goal.projectIds.push(project.id);
     }
   });
 
-  // Link milestones to projects
   milestones.forEach((milestone) => {
-    const project = projects.find((p) => p.id === milestone.projectId);
-    if (project) {
-      project.milestoneIds.push(milestone.id);
+    milestone.projectId = ensureValidReference(
+      milestone.projectId,
+      projects,
+      "Project",
+      "Milestone",
+      milestone.id
+    );
+    if (milestone.projectId) {
+      const project = projects.find((p) => p.id === milestone.projectId);
+      if (project) project.milestoneIds.push(milestone.id);
     }
+    milestone.dependencyIds = milestone.dependencyIds.filter((depId) =>
+      ensureValidReference(
+        depId,
+        milestones,
+        "Milestone",
+        "Milestone",
+        milestone.id
+      )
+    );
   });
 
-  // Link tasks to milestones
   tasks.forEach((task) => {
+    task.milestoneId = ensureValidReference(
+      task.milestoneId,
+      milestones,
+      "Milestone",
+      "Task",
+      task.id
+    );
     if (task.milestoneId) {
       const milestone = milestones.find((m) => m.id === task.milestoneId);
-      if (milestone) {
-        milestone.taskIds.push(task.id);
-      }
+      if (milestone) milestone.taskIds.push(task.id);
     }
+    task.dependencyIds = task.dependencyIds.filter((depId) =>
+      ensureValidReference(depId, tasks, "Task", "Task", task.id)
+    );
   });
 
   return { goals, projects, milestones, tasks };
@@ -59,8 +86,8 @@ export function convertObsidianData(data: ObsidianDataViewData): {
 function convertGoal(obsidianGoal: ObsidianGoal): Goal {
   return {
     type: "goal",
-    id: obsidianGoal.file?.path || "",
-    name: obsidianGoal.file?.name || "",
+    id: obsidianGoal.id || "",
+    name: obsidianGoal.name || "",
     projectIds: [],
     status: ensureValidStatus(obsidianGoal.status),
   };
@@ -69,8 +96,8 @@ function convertGoal(obsidianGoal: ObsidianGoal): Goal {
 function convertProject(obsidianProject: ObsidianProject): Project {
   return {
     type: "project",
-    id: obsidianProject.file?.path || "",
-    name: obsidianProject.file?.name || "",
+    id: obsidianProject.id || "",
+    name: obsidianProject.name || "",
     deadline: obsidianProject.deadline
       ? new Date(obsidianProject.deadline)
       : undefined,
@@ -86,9 +113,9 @@ function convertProject(obsidianProject: ObsidianProject): Project {
 function convertMilestone(obsidianMilestone: ObsidianMilestone): Milestone {
   return {
     type: "milestone",
-    id: obsidianMilestone.file?.path || "",
-    name: obsidianMilestone.file?.name || "",
-    projectId: obsidianMilestone.project?.path || "",
+    id: obsidianMilestone.id || "",
+    name: obsidianMilestone.name || "",
+    projectId: obsidianMilestone.project?.path || undefined,
     dependencyIds:
       obsidianMilestone.dependencies?.map((dep) => dep.path || "") || [],
     status: ensureValidStatus(obsidianMilestone.status),
@@ -99,8 +126,8 @@ function convertMilestone(obsidianMilestone: ObsidianMilestone): Milestone {
 function convertTask(obsidianTask: ObsidianTask): Task {
   return {
     type: "task",
-    id: obsidianTask.file?.path || "",
-    name: obsidianTask.file?.name || "",
+    id: obsidianTask.id || "",
+    name: obsidianTask.name || "",
     status: ensureValidStatus(obsidianTask.status),
     completionDate: undefined,
     dependencyIds:

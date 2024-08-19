@@ -204,7 +204,10 @@ var optimizeSequence = (projects, goals, milestones, tasks) => {
       items: getUniqueProjects(allTasks, milestones),
       getItemId: (task) => {
         const milestone = milestones.find((m) => m.id === task.milestoneId);
-        return milestone == null ? void 0 : milestone.projectId;
+        if (milestone) {
+          return milestone.projectId;
+        }
+        return void 0;
       }
     },
     {
@@ -317,7 +320,9 @@ var getUniqueProjects = (tasks, milestones) => {
   tasks.forEach((task) => {
     const milestone = milestones.find((m) => m.id === task.milestoneId);
     if (milestone) {
-      projectIds.add(milestone.projectId);
+      if (milestone.projectId) {
+        projectIds.add(milestone.projectId);
+      }
     }
   });
   return projectIds;
@@ -352,6 +357,18 @@ function ensureValidViability(viability) {
   const validViabilities = [1, 2, 3, 4, 5];
   return validViabilities.includes(viability) ? viability : 3;
 }
+function ensureValidReference(referenceId, collection, entityType, parentType, parentId) {
+  if (!referenceId)
+    return void 0;
+  const found = collection.some((item) => item.id === referenceId);
+  if (!found) {
+    console.log(
+      `Warning: ${entityType} ${referenceId} not found for ${parentType} ${parentId}. Removing invalid reference.`
+    );
+    return void 0;
+  }
+  return referenceId;
+}
 
 // src/utils/obsidian/obsidianDataConverter.ts
 function convertObsidianData(data) {
@@ -363,78 +380,109 @@ function convertObsidianData(data) {
   );
   const tasks = (((_d = data.tasks) == null ? void 0 : _d.values) || []).map(convertTask);
   projects.forEach((project) => {
+    project.goalId = ensureValidReference(
+      project.goalId,
+      goals,
+      "Goal",
+      "Project",
+      project.id
+    );
     if (project.goalId) {
       const goal = goals.find((g) => g.id === project.goalId);
-      if (goal) {
+      if (goal)
         goal.projectIds.push(project.id);
-      }
     }
   });
   milestones.forEach((milestone) => {
-    const project = projects.find((p) => p.id === milestone.projectId);
-    if (project) {
-      project.milestoneIds.push(milestone.id);
+    milestone.projectId = ensureValidReference(
+      milestone.projectId,
+      projects,
+      "Project",
+      "Milestone",
+      milestone.id
+    );
+    if (milestone.projectId) {
+      const project = projects.find((p) => p.id === milestone.projectId);
+      if (project)
+        project.milestoneIds.push(milestone.id);
     }
+    milestone.dependencyIds = milestone.dependencyIds.filter(
+      (depId) => ensureValidReference(
+        depId,
+        milestones,
+        "Milestone",
+        "Milestone",
+        milestone.id
+      )
+    );
   });
   tasks.forEach((task) => {
+    task.milestoneId = ensureValidReference(
+      task.milestoneId,
+      milestones,
+      "Milestone",
+      "Task",
+      task.id
+    );
     if (task.milestoneId) {
       const milestone = milestones.find((m) => m.id === task.milestoneId);
-      if (milestone) {
+      if (milestone)
         milestone.taskIds.push(task.id);
-      }
     }
+    task.dependencyIds = task.dependencyIds.filter(
+      (depId) => ensureValidReference(depId, tasks, "Task", "Task", task.id)
+    );
   });
   return { goals, projects, milestones, tasks };
 }
 function convertGoal(obsidianGoal) {
-  var _a, _b;
   return {
     type: "goal",
-    id: ((_a = obsidianGoal.file) == null ? void 0 : _a.path) || "",
-    name: ((_b = obsidianGoal.file) == null ? void 0 : _b.name) || "",
+    id: obsidianGoal.id || "",
+    name: obsidianGoal.name || "",
     projectIds: [],
     status: ensureValidStatus(obsidianGoal.status)
   };
 }
 function convertProject(obsidianProject) {
-  var _a, _b, _c;
+  var _a;
   return {
     type: "project",
-    id: ((_a = obsidianProject.file) == null ? void 0 : _a.path) || "",
-    name: ((_b = obsidianProject.file) == null ? void 0 : _b.name) || "",
+    id: obsidianProject.id || "",
+    name: obsidianProject.name || "",
     deadline: obsidianProject.deadline ? new Date(obsidianProject.deadline) : void 0,
     deadlineType: obsidianProject.deadlineType || void 0,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: ((_c = obsidianProject.goal) == null ? void 0 : _c.path) || void 0
+    goalId: ((_a = obsidianProject.goal) == null ? void 0 : _a.path) || void 0
   };
 }
 function convertMilestone(obsidianMilestone) {
-  var _a, _b, _c, _d;
+  var _a, _b;
   return {
     type: "milestone",
-    id: ((_a = obsidianMilestone.file) == null ? void 0 : _a.path) || "",
-    name: ((_b = obsidianMilestone.file) == null ? void 0 : _b.name) || "",
-    projectId: ((_c = obsidianMilestone.project) == null ? void 0 : _c.path) || "",
-    dependencyIds: ((_d = obsidianMilestone.dependencies) == null ? void 0 : _d.map((dep) => dep.path || "")) || [],
+    id: obsidianMilestone.id || "",
+    name: obsidianMilestone.name || "",
+    projectId: ((_a = obsidianMilestone.project) == null ? void 0 : _a.path) || void 0,
+    dependencyIds: ((_b = obsidianMilestone.dependencies) == null ? void 0 : _b.map((dep) => dep.path || "")) || [],
     status: ensureValidStatus(obsidianMilestone.status),
     taskIds: []
   };
 }
 function convertTask(obsidianTask) {
-  var _a, _b, _c, _d;
+  var _a, _b;
   return {
     type: "task",
-    id: ((_a = obsidianTask.file) == null ? void 0 : _a.path) || "",
-    name: ((_b = obsidianTask.file) == null ? void 0 : _b.name) || "",
+    id: obsidianTask.id || "",
+    name: obsidianTask.name || "",
     status: ensureValidStatus(obsidianTask.status),
     completionDate: void 0,
-    dependencyIds: ((_c = obsidianTask.dependencies) == null ? void 0 : _c.map((dep) => dep.path || "")) || [],
+    dependencyIds: ((_a = obsidianTask.dependencies) == null ? void 0 : _a.map((dep) => dep.path || "")) || [],
     duration: obsidianTask.duration || 0,
     timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
-    milestoneId: ((_d = obsidianTask.milestone) == null ? void 0 : _d.path) || void 0
+    milestoneId: ((_b = obsidianTask.milestone) == null ? void 0 : _b.path) || void 0
   };
 }
 

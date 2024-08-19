@@ -33,7 +33,10 @@ export const optimizeSequence = (
       items: getUniqueProjects(allTasks, milestones),
       getItemId: (task: Task) => {
         const milestone = milestones.find((m) => m.id === task.milestoneId);
-        return milestone?.projectId;
+        if (milestone) {
+          return milestone.projectId;
+        }
+        return undefined;
       },
     },
     {
@@ -197,7 +200,9 @@ const getUniqueProjects = (
   tasks.forEach((task) => {
     const milestone = milestones.find((m) => m.id === task.milestoneId);
     if (milestone) {
-      projectIds.add(milestone.projectId);
+      if (milestone.projectId) {
+        projectIds.add(milestone.projectId);
+      }
     }
   });
   return projectIds;

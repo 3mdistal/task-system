@@ -1,4 +1,4 @@
-import { Task, Project, SimulationState, Milestone } from "../types";
+import { Task, Project, SimulationState, Milestone, Goal } from "../types";
 import { addDays } from "../utils/dateUtils";
 import { calculateTaskScore } from "../utils/calculationUtils";
 import type { SimulationResult } from "./optimizationService";
@@ -6,6 +6,7 @@ import type { SimulationResult } from "./optimizationService";
 export const simulateTaskSequence = (
   tasks: Task[],
   projects: Project[],
+  goals: Goal[],
   milestones: Milestone[]
 ): SimulationResult => {
   const state = initializeSimulation(projects);
@@ -17,7 +18,7 @@ export const simulateTaskSequence = (
     for (let i = 0; i < remainingTasks.length; i++) {
       const task = remainingTasks[i];
       if (canStartTask(task, state.completedTasks)) {
-        processTask(task, state, projects, milestones);
+        processTask(task, state, projects, milestones, goals);
         remainingTasks.splice(i, 1);
         i--; // Adjust index after removing task
         taskProcessed = true;
@@ -49,10 +50,11 @@ const processTask = (
   task: Task,
   state: SimulationState,
   projects: Project[],
-  milestones: Milestone[]
+  milestones: Milestone[],
+  goals: Goal[]
 ): void => {
   const { projectId, newDate } = getProjectAndNewDate(task, state, milestones);
-  updateSimulationState(task, newDate, state, projects, milestones);
+  updateSimulationState(task, newDate, state, projects, milestones, goals);
 };
 
 const getProjectAndNewDate = (
@@ -71,7 +73,8 @@ const updateSimulationState = (
   newDate: Date,
   state: SimulationState,
   projects: Project[],
-  milestones: Milestone[]
+  milestones: Milestone[],
+  goals: Goal[]
 ): void => {
   state.currentDate = newDate;
   state.totalScore += calculateTaskScore(task, newDate, milestones, projects);
@@ -81,7 +84,7 @@ const updateSimulationState = (
   const project = projects.find((p) => p.id === milestone?.projectId);
   if (
     project &&
-    isProjectCompleted(project, state.completedTasks, milestones)
+    isProjectCompleted(project, state.completedTasks, milestones, goals)
   ) {
     state.projectDeadlines.set(project.id, newDate);
   }
@@ -102,7 +105,8 @@ const canStartTask = (task: Task, completedTasks: Task[]): boolean => {
 const isProjectCompleted = (
   project: Project,
   completedTasks: Task[],
-  milestones: Milestone[]
+  milestones: Milestone[],
+  goals: Goal[]
 ): boolean => {
   const projectMilestones = milestones.filter(
     (m) => m.projectId === project.id

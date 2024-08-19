@@ -13,16 +13,18 @@ describe("optimizationService", () => {
   const createMockTask = (
     name: string,
     duration: number,
-    dependencies: Task[] = [],
-    goal?: Goal
+    dependencyIds: string[] = [],
+    goalId?: string
   ): Task => ({
+    id: Math.random().toString(36).substr(2, 9),
     name,
     duration,
-    dependencies,
+    dependencyIds,
     status: "planned",
     timeSpent: 0,
-    milestone: undefined,
-    goal,
+    milestoneId: undefined,
+    goalId,
+    type: "task",
   });
 
   // Helper function to create mock projects
@@ -31,31 +33,37 @@ describe("optimizationService", () => {
     deadline: Date,
     deadlineType: "hard" | "soft"
   ): Project => ({
+    id: Math.random().toString(36).substr(2, 9),
     name,
     deadline,
     deadlineType,
     excitement: 3,
     viability: 4,
     status: "planned",
-    goal: {} as Goal,
-    milestones: () => [],
+    goalId: undefined,
+    milestoneIds: [],
+    type: "project",
   });
 
   // Helper function to create mock goals
   const createMockGoal = (name: string): Goal => ({
+    id: Math.random().toString(36).substr(2, 9),
     name,
-    projects: () => [],
+    projectIds: [],
     status: "planned",
+    type: "goal",
   });
 
   // Helper function to create mock milestones
-  function createMockMilestone(name: string, project: Project): Milestone {
+  function createMockMilestone(name: string, projectId: string): Milestone {
     return {
+      id: Math.random().toString(36).substr(2, 9),
       name,
-      project,
-      dependencies: [],
+      projectId,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
   }
 
@@ -71,21 +79,23 @@ describe("optimizationService", () => {
       "soft"
     );
     const mockMilestone: Milestone = {
+      id: Math.random().toString(36).substr(2, 9),
       name: "Test Milestone",
-      project: mockProject,
-      dependencies: [],
+      projectId: mockProject.id,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
 
     const tasks = [
-      { ...createMockTask("Task 1", 2), milestone: mockMilestone },
-      { ...createMockTask("Task 2", 3), milestone: mockMilestone },
-      { ...createMockTask("Task 3", 1), milestone: mockMilestone },
+      { ...createMockTask("Task 1", 2), milestoneId: mockMilestone.id },
+      { ...createMockTask("Task 2", 3), milestoneId: mockMilestone.id },
+      { ...createMockTask("Task 3", 1), milestoneId: mockMilestone.id },
     ];
 
-    mockProject.milestones = () => [mockMilestone];
-    mockMilestone.tasks = () => tasks;
+    mockProject.milestoneIds = [mockMilestone.id];
+    mockMilestone.taskIds = tasks.map((t) => t.id);
 
     const mockSimulationResult: SimulationResult = {
       score: 100,
@@ -95,7 +105,7 @@ describe("optimizationService", () => {
 
     (simulateTaskSequence as jest.Mock).mockReturnValue(mockSimulationResult);
 
-    const result = optimizeSequence([mockProject]);
+    const result = optimizeSequence([mockProject], [], [mockMilestone], tasks);
 
     expect(result).toEqual(tasks);
     expect(simulateTaskSequence).toHaveBeenCalledTimes(3); // Once for each strategy
@@ -108,27 +118,32 @@ describe("optimizationService", () => {
       "soft"
     );
     const mockMilestone: Milestone = {
+      id: Math.random().toString(36).substr(2, 9),
       name: "Test Milestone",
-      project: mockProject,
-      dependencies: [],
+      projectId: mockProject.id,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
 
-    const task1 = { ...createMockTask("Task 1", 2), milestone: mockMilestone };
+    const task1 = {
+      ...createMockTask("Task 1", 2),
+      milestoneId: mockMilestone.id,
+    };
     const task2 = {
-      ...createMockTask("Task 2", 3, [task1]),
-      milestone: mockMilestone,
+      ...createMockTask("Task 2", 3, [task1.id]),
+      milestoneId: mockMilestone.id,
     };
     const task3 = {
-      ...createMockTask("Task 3", 1, [task2]),
-      milestone: mockMilestone,
+      ...createMockTask("Task 3", 1, [task2.id]),
+      milestoneId: mockMilestone.id,
     };
 
     const tasks = [task1, task2, task3];
 
-    mockProject.milestones = () => [mockMilestone];
-    mockMilestone.tasks = () => tasks;
+    mockProject.milestoneIds = [mockMilestone.id];
+    mockMilestone.taskIds = tasks.map((t) => t.id);
 
     const mockSimulationResult: SimulationResult = {
       score: 100,
@@ -138,7 +153,7 @@ describe("optimizationService", () => {
 
     (simulateTaskSequence as jest.Mock).mockReturnValue(mockSimulationResult);
 
-    const result = optimizeSequence([mockProject]);
+    const result = optimizeSequence([mockProject], [], [mockMilestone], tasks);
 
     expect(result[0]).toBe(task1);
     expect(result[1]).toBe(task2);
@@ -158,35 +173,39 @@ describe("optimizationService", () => {
     );
 
     const milestone1: Milestone = {
+      id: Math.random().toString(36).substr(2, 9),
       name: "Milestone 1",
-      project: project1,
-      dependencies: [],
+      projectId: project1.id,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
 
     const milestone2: Milestone = {
+      id: Math.random().toString(36).substr(2, 9),
       name: "Milestone 2",
-      project: project2,
-      dependencies: [],
+      projectId: project2.id,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
 
     const tasks1 = [
-      { ...createMockTask("Task 1", 2), milestone: milestone1 },
-      { ...createMockTask("Task 2", 3), milestone: milestone1 },
+      { ...createMockTask("Task 1", 2), milestoneId: milestone1.id },
+      { ...createMockTask("Task 2", 3), milestoneId: milestone1.id },
     ];
 
     const tasks2 = [
-      { ...createMockTask("Task 3", 1), milestone: milestone2 },
-      { ...createMockTask("Task 4", 4), milestone: milestone2 },
+      { ...createMockTask("Task 3", 1), milestoneId: milestone2.id },
+      { ...createMockTask("Task 4", 4), milestoneId: milestone2.id },
     ];
 
-    project1.milestones = () => [milestone1];
-    project2.milestones = () => [milestone2];
-    milestone1.tasks = () => tasks1;
-    milestone2.tasks = () => tasks2;
+    project1.milestoneIds = [milestone1.id];
+    project2.milestoneIds = [milestone2.id];
+    milestone1.taskIds = tasks1.map((t) => t.id);
+    milestone2.taskIds = tasks2.map((t) => t.id);
 
     const mockSimulationResult: SimulationResult = {
       score: 100,
@@ -196,7 +215,12 @@ describe("optimizationService", () => {
 
     (simulateTaskSequence as jest.Mock).mockReturnValue(mockSimulationResult);
 
-    const result = optimizeSequence([project1, project2]);
+    const result = optimizeSequence(
+      [project1, project2],
+      [],
+      [milestone1, milestone2],
+      [...tasks1, ...tasks2]
+    );
 
     expect(result).toHaveLength(4);
     expect(result).toEqual(expect.arrayContaining([...tasks1, ...tasks2]));
@@ -209,21 +233,23 @@ describe("optimizationService", () => {
       "soft"
     );
     const mockMilestone: Milestone = {
+      id: Math.random().toString(36).substr(2, 9),
       name: "Test Milestone",
-      project: mockProject,
-      dependencies: [],
+      projectId: mockProject.id,
+      dependencyIds: [],
       status: "planned",
-      tasks: () => [],
+      taskIds: [],
+      type: "milestone",
     };
 
     const tasks = [
-      { ...createMockTask("Task 1", 2), milestone: mockMilestone },
-      { ...createMockTask("Task 2", 3), milestone: mockMilestone },
-      { ...createMockTask("Task 3", 1), milestone: mockMilestone },
+      { ...createMockTask("Task 1", 2), milestoneId: mockMilestone.id },
+      { ...createMockTask("Task 2", 3), milestoneId: mockMilestone.id },
+      { ...createMockTask("Task 3", 1), milestoneId: mockMilestone.id },
     ];
 
-    mockProject.milestones = () => [mockMilestone];
-    mockMilestone.tasks = () => tasks;
+    mockProject.milestoneIds = [mockMilestone.id];
+    mockMilestone.taskIds = tasks.map((t) => t.id);
 
     const mockSimulationResults: SimulationResult[] = [
       {
@@ -248,19 +274,13 @@ describe("optimizationService", () => {
       .mockReturnValueOnce(mockSimulationResults[1])
       .mockReturnValueOnce(mockSimulationResults[2]);
 
-    const result = optimizeSequence([mockProject]);
+    const result = optimizeSequence([mockProject], [], [mockMilestone], tasks);
 
     expect(result).toEqual([tasks[2], tasks[0], tasks[1]]);
     expect(simulateTaskSequence).toHaveBeenCalledTimes(3);
   });
 
   it("should handle multiple projects with different goals", () => {
-    const createMockGoal = (name: string): Goal => ({
-      name,
-      projects: () => [],
-      status: "planned",
-    });
-
     const goal1 = createMockGoal("Goal 1");
     const goal2 = createMockGoal("Goal 2");
 
@@ -269,44 +289,31 @@ describe("optimizationService", () => {
       new Date("2023-12-31"),
       "soft"
     );
-    project1.goal = goal1;
+    project1.goalId = goal1.id;
     const project2 = createMockProject(
       "Project 2",
       new Date("2024-01-31"),
       "hard"
     );
-    project2.goal = goal2;
+    project2.goalId = goal2.id;
 
-    const milestone1: Milestone = {
-      name: "Milestone 1",
-      project: project1,
-      dependencies: [],
-      status: "planned",
-      tasks: () => [],
-    };
-
-    const milestone2: Milestone = {
-      name: "Milestone 2",
-      project: project2,
-      dependencies: [],
-      status: "planned",
-      tasks: () => [],
-    };
+    const milestone1 = createMockMilestone("Milestone 1", project1.id);
+    const milestone2 = createMockMilestone("Milestone 2", project2.id);
 
     const tasks1 = [
-      { ...createMockTask("Task 1", 2), milestone: milestone1 },
-      { ...createMockTask("Task 2", 3), milestone: milestone1 },
+      { ...createMockTask("Task 1", 2), milestoneId: milestone1.id },
+      { ...createMockTask("Task 2", 3), milestoneId: milestone1.id },
     ];
 
     const tasks2 = [
-      { ...createMockTask("Task 3", 1), milestone: milestone2 },
-      { ...createMockTask("Task 4", 4), milestone: milestone2 },
+      { ...createMockTask("Task 3", 1), milestoneId: milestone2.id },
+      { ...createMockTask("Task 4", 4), milestoneId: milestone2.id },
     ];
 
-    project1.milestones = () => [milestone1];
-    project2.milestones = () => [milestone2];
-    milestone1.tasks = () => tasks1;
-    milestone2.tasks = () => tasks2;
+    project1.milestoneIds = [milestone1.id];
+    project2.milestoneIds = [milestone2.id];
+    milestone1.taskIds = tasks1.map((t) => t.id);
+    milestone2.taskIds = tasks2.map((t) => t.id);
 
     const allTasks = [...tasks1, ...tasks2];
 
@@ -316,13 +323,39 @@ describe("optimizationService", () => {
       endDate: new Date("2024-01-15"),
     }));
 
-    const result = optimizeSequence([project1, project2]);
+    const result = optimizeSequence(
+      [project1, project2],
+      [goal1, goal2],
+      [milestone1, milestone2],
+      allTasks
+    );
 
     expect(result).toHaveLength(4);
     expect(result).toEqual(expect.arrayContaining(allTasks));
 
+    // Update the assertions to use the correct properties
+    const projectSequence = result.map((task) => {
+      const milestone = [milestone1, milestone2].find(
+        (m) => m.id === task.milestoneId
+      );
+      return milestone
+        ? [project1, project2].find((p) => p.id === milestone.projectId)?.name
+        : undefined;
+    });
+
+    const goalSequence = result.map((task) => {
+      const milestone = [milestone1, milestone2].find(
+        (m) => m.id === task.milestoneId
+      );
+      const project = milestone
+        ? [project1, project2].find((p) => p.id === milestone.projectId)
+        : undefined;
+      return project
+        ? [goal1, goal2].find((g) => g.id === project.goalId)?.name
+        : undefined;
+    });
+
     // Check if tasks from different projects are interleaved
-    const projectSequence = result.map((task) => task.milestone?.project.name);
     expect(projectSequence).not.toEqual([
       "Project 1",
       "Project 1",
@@ -337,9 +370,6 @@ describe("optimizationService", () => {
     ]);
 
     // Check if tasks from different goals are interleaved
-    const goalSequence = result.map(
-      (task) => task.milestone?.project.goal?.name
-    );
     expect(goalSequence).not.toEqual(["Goal 1", "Goal 1", "Goal 2", "Goal 2"]);
     expect(goalSequence).not.toEqual(["Goal 2", "Goal 2", "Goal 1", "Goal 1"]);
 
@@ -360,10 +390,16 @@ describe("optimizationService", () => {
 
     // Verify that tasks maintain their project and goal associations
     result.forEach((task) => {
-      if (task.milestone?.project === project1) {
-        expect(task.milestone.project.goal).toBe(goal1);
-      } else if (task.milestone?.project === project2) {
-        expect(task.milestone.project.goal).toBe(goal2);
+      const milestone = [milestone1, milestone2].find(
+        (m) => m.id === task.milestoneId
+      );
+      const project = milestone
+        ? [project1, project2].find((p) => p.id === milestone.projectId)
+        : undefined;
+      if (milestone?.projectId === project1.id) {
+        expect(project?.goalId).toBe(goal1.id);
+      } else if (milestone?.projectId === project2.id) {
+        expect(project?.goalId).toBe(goal2.id);
       } else {
         fail("Task associated with unknown project");
       }
@@ -371,12 +407,6 @@ describe("optimizationService", () => {
   });
 
   it("should handle complex scenarios with multiple projects and overlapping goals", () => {
-    const createMockGoal = (name: string): Goal => ({
-      name,
-      projects: () => [],
-      status: "planned",
-    });
-
     const goal1 = createMockGoal("Goal 1");
     const goal2 = createMockGoal("Goal 2");
     const goal3 = createMockGoal("Goal 3");
@@ -397,32 +427,50 @@ describe("optimizationService", () => {
       "soft"
     );
 
-    project1.goal = goal1;
-    project2.goal = goal2;
-    project3.goal = goal3;
+    project1.goalId = goal1.id;
+    project2.goalId = goal2.id;
+    project3.goalId = goal3.id;
 
-    const milestone1 = createMockMilestone("Milestone 1", project1);
-    const milestone2 = createMockMilestone("Milestone 2", project2);
-    const milestone3 = createMockMilestone("Milestone 3", project3);
-    const milestone4 = createMockMilestone("Milestone 4", project1); // Additional milestone for project1
+    const milestone1 = createMockMilestone("Milestone 1", project1.id);
+    const milestone2 = createMockMilestone("Milestone 2", project2.id);
+    const milestone3 = createMockMilestone("Milestone 3", project3.id);
+    const milestone4 = createMockMilestone("Milestone 4", project1.id); // Additional milestone for project1
 
     const tasks = [
-      { ...createMockTask("Task 1", 2, [], goal1), milestone: milestone1 },
-      { ...createMockTask("Task 2", 3, [], goal2), milestone: milestone2 },
-      { ...createMockTask("Task 3", 1, [], goal3), milestone: milestone3 },
-      { ...createMockTask("Task 4", 4, [], goal2), milestone: milestone1 }, // Task in project1 but contributes to goal2
-      { ...createMockTask("Task 5", 2, [], goal1), milestone: milestone2 }, // Task in project2 but contributes to goal1
-      { ...createMockTask("Task 6", 3, [], goal3), milestone: milestone4 }, // Task in project1 but contributes to goal3
+      {
+        ...createMockTask("Task 1", 2, [], goal1.id),
+        milestoneId: milestone1.id,
+      },
+      {
+        ...createMockTask("Task 2", 3, [], goal2.id),
+        milestoneId: milestone2.id,
+      },
+      {
+        ...createMockTask("Task 3", 1, [], goal3.id),
+        milestoneId: milestone3.id,
+      },
+      {
+        ...createMockTask("Task 4", 4, [], goal2.id),
+        milestoneId: milestone1.id,
+      }, // Task in project1 but contributes to goal2
+      {
+        ...createMockTask("Task 5", 2, [], goal1.id),
+        milestoneId: milestone2.id,
+      }, // Task in project2 but contributes to goal1
+      {
+        ...createMockTask("Task 6", 3, [], goal3.id),
+        milestoneId: milestone4.id,
+      }, // Task in project1 but contributes to goal3
     ];
 
-    project1.milestones = () => [milestone1, milestone4];
-    project2.milestones = () => [milestone2];
-    project3.milestones = () => [milestone3];
+    project1.milestoneIds = [milestone1.id, milestone4.id];
+    project2.milestoneIds = [milestone2.id];
+    project3.milestoneIds = [milestone3.id];
 
-    milestone1.tasks = () => [tasks[0], tasks[3]];
-    milestone2.tasks = () => [tasks[1], tasks[4]];
-    milestone3.tasks = () => [tasks[2]];
-    milestone4.tasks = () => [tasks[5]];
+    milestone1.taskIds = [tasks[0].id, tasks[3].id];
+    milestone2.taskIds = [tasks[1].id, tasks[4].id];
+    milestone3.taskIds = [tasks[2].id];
+    milestone4.taskIds = [tasks[5].id];
 
     (simulateTaskSequence as jest.Mock).mockImplementation((tasks) => ({
       score: 100,
@@ -430,13 +478,39 @@ describe("optimizationService", () => {
       endDate: new Date("2024-03-15"),
     }));
 
-    const result = optimizeSequence([project1, project2, project3]);
+    const result = optimizeSequence(
+      [project1, project2, project3],
+      [goal1, goal2, goal3],
+      [milestone1, milestone2, milestone3, milestone4],
+      tasks
+    );
 
     expect(result).toHaveLength(6);
     expect(result).toEqual(expect.arrayContaining(tasks));
 
-    const projectSequence = result.map((task) => task.milestone?.project.name);
-    const goalSequence = result.map((task) => task.goal?.name);
+    const projectSequence = result.map((task) => {
+      const milestone = [milestone1, milestone2, milestone3, milestone4].find(
+        (m) => m.id === task.milestoneId
+      );
+      return milestone
+        ? [project1, project2, project3].find(
+            (p) => p.id === milestone.projectId
+          )?.name
+        : undefined;
+    });
+    const goalSequence = result.map((task) => {
+      const milestone = [milestone1, milestone2, milestone3, milestone4].find(
+        (m) => m.id === task.milestoneId
+      );
+      const project = milestone
+        ? [project1, project2, project3].find(
+            (p) => p.id === milestone.projectId
+          )
+        : undefined;
+      return project
+        ? [goal1, goal2, goal3].find((g) => g.id === project.goalId)?.name
+        : undefined;
+    });
 
     // Check if tasks from different projects are interleaved
     expect(new Set(projectSequence.slice(0, 3)).size).toBeGreaterThan(1);
@@ -460,8 +534,16 @@ describe("optimizationService", () => {
 
     // Verify that tasks maintain their correct associations
     result.forEach((task) => {
-      expect(task.milestone?.project).toBeDefined();
-      expect(task.goal).toBeDefined();
+      expect(task.milestoneId).toBeDefined();
+      const milestone = [milestone1, milestone2, milestone3, milestone4].find(
+        (m) => m.id === task.milestoneId
+      );
+      const project = milestone
+        ? [project1, project2, project3].find(
+            (p) => p.id === milestone.projectId
+          )
+        : undefined;
+      expect(project?.goalId).toBeDefined();
     });
 
     // Verify that simulateTaskSequence was called for each strategy

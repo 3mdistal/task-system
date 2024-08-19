@@ -9,6 +9,7 @@ export interface SimulationResult {
 
 export const optimizeSequence = (
   projects: Project[],
+  goals: Goal[],
   milestones: Milestone[],
   tasks: Task[]
 ): Task[] => {
@@ -46,6 +47,7 @@ export const optimizeSequence = (
     allTasks,
     strategies,
     projects,
+    goals,
     milestones
   );
 
@@ -56,6 +58,7 @@ const tryOptimizationStrategies = (
   allTasks: Task[],
   strategies: OptimizationStrategy[],
   projects: Project[],
+  goals: Goal[],
   milestones: Milestone[]
 ): SimulationResult => {
   let bestResult: SimulationResult = {
@@ -73,6 +76,7 @@ const tryOptimizationStrategies = (
     const result = simulateTaskSequence(
       alternatingSequence,
       projects,
+      goals,
       milestones
     );
     if (

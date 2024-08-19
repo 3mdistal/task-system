@@ -1,9 +1,14 @@
+import { optimizeTasks } from "../src/index";
+import { checkDeadlineStatus } from "../src/utils/dateUtils";
+import { calculateCrunchInfo } from "../src/utils/crunchUtils";
 import {
-  optimizeTasks,
-  checkDeadlineStatus,
-  calculateCrunchInfo,
-} from "../src/index";
-import { Project, Task, Milestone, Status, Goal } from "../src/types";
+  Project,
+  Task,
+  Milestone,
+  Status,
+  Goal,
+  ObsidianProject,
+} from "../src/types";
 import * as optimizationService from "../src/services/optimizationService";
 import * as simulationService from "../src/services/simulationService";
 
@@ -12,73 +17,120 @@ jest.mock("../src/services/simulationService");
 
 // Move mock data to a more global scope
 const mockGoal: Goal = {
+  id: "test-goal-id",
   name: "Test Goal",
-  projects: () => [],
+  projectIds: [],
   status: "In Progress" as Status,
+  type: "goal",
 };
 
 const mockProjects: Project[] = [
   {
+    id: "project-a-id",
     name: "Project A",
     deadline: new Date("2023-12-31"),
     deadlineType: "hard",
     excitement: 4,
-    goal: mockGoal,
-    milestones: () => [],
+    goalId: mockGoal.id,
+    milestoneIds: [],
     status: "In Progress" as Status,
     viability: 3,
+    type: "project",
   },
   {
+    id: "project-b-id",
     name: "Project B",
     deadline: new Date("2024-01-31"),
     deadlineType: "soft",
     excitement: 3,
-    goal: mockGoal,
-    milestones: () => [],
+    goalId: mockGoal.id,
+    milestoneIds: [],
     status: "Not Started" as Status,
     viability: 4,
+    type: "project",
   },
 ];
 
 const mockMilestones: Milestone[] = [
   {
-    dependencies: [],
+    id: "milestone-a-id",
     name: "Milestone A",
-    project: mockProjects[0],
+    projectId: mockProjects[0].id,
+    dependencyIds: [],
     status: "Not Started" as Status,
-    tasks: () => [],
+    taskIds: [],
+    type: "milestone",
   },
   {
-    dependencies: [],
+    id: "milestone-b-id",
     name: "Milestone B",
-    project: mockProjects[1],
+    projectId: mockProjects[1].id,
+    dependencyIds: [],
     status: "Not Started" as Status,
-    tasks: () => [],
+    taskIds: [],
+    type: "milestone",
   },
 ];
 
 const mockTasks: Task[] = [
   {
+    id: "task-1-id",
     name: "Task 1",
     duration: 5,
     timeSpent: 0,
-    dependencies: [],
+    dependencyIds: [],
     status: "Not Started" as Status,
     completionDate: new Date("2023-12-30"),
-    milestone: mockMilestones[0],
-    goal: mockGoal,
+    milestoneId: mockMilestones[0].id,
+    type: "task",
   },
   {
+    id: "task-2-id",
     name: "Task 2",
     duration: 3,
     timeSpent: 0,
-    dependencies: [],
+    dependencyIds: [],
     status: "Not Started" as Status,
     completionDate: new Date("2024-02-01"),
-    milestone: mockMilestones[1],
-    goal: mockGoal,
+    milestoneId: mockMilestones[1].id,
+    type: "task",
   },
 ];
+
+function convertToObsidianProject(project: Project): ObsidianProject {
+  return {
+    file: {
+      path: `${project.name}.md`,
+      folder: "Projects",
+      name: project.name,
+      link: { path: `${project.name}.md`, type: "file" },
+      outlinks: { values: [], settings: {}, length: 0 },
+      inlinks: { values: [], settings: {}, length: 0 },
+      etags: { values: [], settings: {}, length: 0 },
+      tags: { values: [], settings: {}, length: 0 },
+      aliases: { values: [], settings: {}, length: 0 },
+      lists: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+      ctime: new Date().toISOString(),
+      cday: new Date().toISOString(),
+      mtime: new Date().toISOString(),
+      mday: new Date().toISOString(),
+      size: 0,
+      starred: false,
+      frontmatter: {},
+      ext: ".md",
+    },
+    type: "project",
+    status: project.status,
+    deadline: project.deadline?.toISOString(),
+    deadlineType: project.deadlineType,
+    excitement: project.excitement,
+    viability: project.viability,
+    goal: project.goalId
+      ? { path: `${project.goalId}.md`, type: "file" }
+      : undefined,
+  };
+}
 
 describe("optimizeTasks", () => {
   beforeEach(() => {
@@ -94,7 +146,16 @@ describe("optimizeTasks", () => {
   });
 
   it("should return an optimization result", () => {
-    const result = optimizeTasks(mockProjects);
+    const result = optimizeTasks({
+      goals: { values: [], settings: {}, length: 0 },
+      projects: {
+        values: mockProjects.map(convertToObsidianProject),
+        settings: {},
+        length: mockProjects.length,
+      },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    });
 
     expect(result).toHaveProperty("optimizedSequence");
     expect(result).toHaveProperty("statistics");
@@ -103,18 +164,40 @@ describe("optimizeTasks", () => {
   });
 
   it("should call optimizeSequence and simulateTaskSequence", () => {
-    optimizeTasks(mockProjects);
+    optimizeTasks({
+      goals: { values: [], settings: {}, length: 0 },
+      projects: {
+        values: mockProjects.map(convertToObsidianProject),
+        settings: {},
+        length: mockProjects.length,
+      },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    });
 
     expect(optimizationService.optimizeSequence).toHaveBeenCalledWith(
-      mockProjects
+      mockProjects.map(convertToObsidianProject),
+      mockMilestones,
+      mockTasks
     );
     expect(simulationService.simulateTaskSequence).toHaveBeenCalledWith(
-      mockTasks
+      mockTasks,
+      mockProjects.map(convertToObsidianProject),
+      mockMilestones
     );
   });
 
   it("should correctly check deadline status", () => {
-    const result = optimizeTasks(mockProjects);
+    const result = optimizeTasks({
+      goals: { values: [], settings: {}, length: 0 },
+      projects: {
+        values: mockProjects.map(convertToObsidianProject),
+        settings: {},
+        length: mockProjects.length,
+      },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    });
 
     expect(result.deadlineStatus).toEqual({
       allHardDeadlinesMet: true,
@@ -125,7 +208,16 @@ describe("optimizeTasks", () => {
   });
 
   it("should calculate crunch info", () => {
-    const result = optimizeTasks(mockProjects);
+    const result = optimizeTasks({
+      goals: { values: [], settings: {}, length: 0 },
+      projects: {
+        values: mockProjects.map(convertToObsidianProject),
+        settings: {},
+        length: mockProjects.length,
+      },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    });
 
     expect(result.crunchInfo).toEqual({
       earliestCrunch: -32,
@@ -142,7 +234,16 @@ describe("optimizeTasks", () => {
     (simulationService.simulateTaskSequence as jest.Mock).mockReturnValueOnce(
       undefined
     );
-    const result = optimizeTasks(mockProjects);
+    const result = optimizeTasks({
+      goals: { values: [], settings: {}, length: 0 },
+      projects: {
+        values: mockProjects.map(convertToObsidianProject),
+        settings: {},
+        length: mockProjects.length,
+      },
+      milestones: { values: [], settings: {}, length: 0 },
+      tasks: { values: [], settings: {}, length: 0 },
+    });
 
     expect(result).toEqual({
       optimizedSequence: [],
@@ -180,7 +281,7 @@ describe("checkDeadlineStatus", () => {
       },
     ];
 
-    const result = checkDeadlineStatus(completedTasks);
+    const result = checkDeadlineStatus(completedTasks, mockProjects);
 
     expect(result).toEqual({
       allHardDeadlinesMet: true,
@@ -198,7 +299,7 @@ describe("checkDeadlineStatus", () => {
       },
     ];
 
-    const result = checkDeadlineStatus(completedTasks);
+    const result = checkDeadlineStatus(completedTasks, mockProjects);
 
     expect(result).toEqual({
       allHardDeadlinesMet: true,
@@ -213,11 +314,11 @@ describe("checkDeadlineStatus", () => {
       {
         ...mockTasks[0],
         completionDate: new Date("2023-12-30"),
-        milestone: undefined,
+        milestoneId: undefined,
       },
     ];
 
-    const result = checkDeadlineStatus(completedTasks);
+    const result = checkDeadlineStatus(completedTasks, mockProjects);
 
     expect(result).toEqual({
       allHardDeadlinesMet: true,

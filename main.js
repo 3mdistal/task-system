@@ -313,7 +313,15 @@ var optimizeSequence = (projects, goals, milestones, tasks) => {
       bestSequence = alternatingSequence;
     }
   }
-  return bestSequence;
+  const completionOrder = new Map(
+    bestResult.completedTasks.map((task, index) => [task.id, index])
+  );
+  return bestSequence.sort((a, b) => {
+    var _a, _b;
+    const orderA = (_a = completionOrder.get(a.id)) != null ? _a : Infinity;
+    const orderB = (_b = completionOrder.get(b.id)) != null ? _b : Infinity;
+    return orderA - orderB;
+  });
 };
 var generateAlternatingSequence = (tasks, items, getItemId) => {
   const sequence = [];

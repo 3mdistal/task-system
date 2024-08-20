@@ -81,7 +81,16 @@ export const optimizeSequence = (
     }
   }
 
-  return bestSequence;
+  // Sort the best sequence based on the completion order in the simulation result
+  const completionOrder = new Map(
+    bestResult!.completedTasks.map((task, index) => [task.id, index])
+  );
+
+  return bestSequence.sort((a, b) => {
+    const orderA = completionOrder.get(a.id) ?? Infinity;
+    const orderB = completionOrder.get(b.id) ?? Infinity;
+    return orderA - orderB;
+  });
 };
 
 const generateAlternatingSequence = (

@@ -96,13 +96,19 @@ function convertGoal(obsidianGoal: ObsidianGoal): Goal {
 }
 
 function convertProject(obsidianProject: ObsidianProject): Project {
+  let deadline: Date | undefined = undefined;
+  if (obsidianProject.deadline) {
+    const parsedDate = new Date(obsidianProject.deadline);
+    if (!isNaN(parsedDate.getTime())) {
+      deadline = new Date(parsedDate.getTime());
+    }
+  }
+
   return {
     type: "project",
     id: obsidianProject.id,
     name: obsidianProject.name,
-    deadline: obsidianProject.deadline
-      ? new Date(obsidianProject.deadline)
-      : undefined,
+    deadline: deadline,
     deadlineType: obsidianProject.deadlineType,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),

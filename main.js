@@ -62,40 +62,6 @@ var addDays = (duration, currentDate) => {
     hoursUsed
   };
 };
-function checkDeadlineStatus(completedTasks, projects) {
-  const missedHardDeadlines = [];
-  const missedSoftDeadlines = [];
-  projects.forEach((project) => {
-    if (project.deadline) {
-      const projectTasks = completedTasks.filter(
-        (task) => task.milestoneId && project.milestoneIds.includes(task.milestoneId)
-      );
-      const lastTaskCompletionDate = Math.max(
-        ...projectTasks.map((task) => {
-          var _a;
-          return ((_a = task.completionDate) == null ? void 0 : _a.getTime()) || 0;
-        })
-      );
-      if (lastTaskCompletionDate > project.deadline.getTime()) {
-        if (project.deadlineType === "hard") {
-          missedHardDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        } else {
-          missedSoftDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        }
-      }
-    }
-  });
-  return {
-    allHardDeadlinesMet: missedHardDeadlines.length === 0,
-    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
-    missedHardDeadlines,
-    missedSoftDeadlines
-  };
-}
 
 // src/utils/calculationUtils.ts
 var calculateTaskScore = (task, completionDate, allMilestones, allProjects) => {
@@ -107,6 +73,44 @@ var calculateTaskScore = (task, completionDate, allMilestones, allProjects) => {
   const deadlineScore = project.deadlineType === "hard" ? daysUntilDeadline >= 0 ? 100 : -1e3 : Math.max(-100, daysUntilDeadline * 10);
   return deadlineScore + project.excitement * 20 + project.viability * 20 + (task.status === "in-flight" ? 50 : 0);
 };
+
+// src/utils/logger.ts
+var Logger = class {
+  constructor() {
+    this.logLevel = "normal";
+  }
+  static getInstance() {
+    if (!Logger.instance) {
+      Logger.instance = new Logger();
+    }
+    return Logger.instance;
+  }
+  setLogLevel(level) {
+    this.logLevel = level;
+    console.log(`Log level set to: ${level}`);
+  }
+  error(...args) {
+    if (this.logLevel !== "off") {
+      console.error(...args);
+    }
+  }
+  warn(...args) {
+    if (this.logLevel === "normal" || this.logLevel === "verbose") {
+      console.warn(...args);
+    }
+  }
+  log(...args) {
+    if (this.logLevel === "normal" || this.logLevel === "verbose") {
+      console.log(...args);
+    }
+  }
+  verbose(...args) {
+    if (this.logLevel === "verbose") {
+      console.log("[VERBOSE]", ...args);
+    }
+  }
+};
+var logger = Logger.getInstance();
 
 // src/services/simulationService.ts
 var simulateTaskSequence = (tasks, projects, goals, milestones) => {
@@ -124,7 +128,7 @@ var simulateTaskSequence = (tasks, projects, goals, milestones) => {
       }
     }
     if (!taskProcessed) {
-      console.warn("No tasks could be processed. Breaking loop.");
+      logger.warn("No tasks could be processed. Breaking loop.");
       break;
     }
   }
@@ -214,23 +218,23 @@ var optimizeSequence = (projects, goals, milestones, tasks) => {
       name: "milestones",
       items: getUniqueMilestones(allTasks),
       getItemId: (task) => task.milestoneId
+    },
+    {
+      name: "deadlines",
+      items: getUniqueDeadlines(projects),
+      getItemId: (task) => {
+        var _a;
+        const milestone = milestones.find((m) => m.id === task.milestoneId);
+        if (milestone) {
+          const project = projects.find((p) => p.id === milestone.projectId);
+          return (_a = project == null ? void 0 : project.deadline) == null ? void 0 : _a.toISOString();
+        }
+        return void 0;
+      }
     }
   ];
-  const result = tryOptimizationStrategies(
-    allTasks,
-    strategies,
-    projects,
-    goals,
-    milestones
-  );
-  return result.completedTasks;
-};
-var tryOptimizationStrategies = (allTasks, strategies, projects, goals, milestones) => {
-  let bestResult = {
-    score: -Infinity,
-    completedTasks: [],
-    endDate: new Date()
-  };
+  let bestResult = null;
+  let bestSequence = [];
   for (const strategy of strategies) {
     const alternatingSequence = generateAlternatingSequence(
       allTasks,
@@ -243,26 +247,35 @@ var tryOptimizationStrategies = (allTasks, strategies, projects, goals, mileston
       goals,
       milestones
     );
-    if (result.score > bestResult.score || result.score === bestResult.score && countProjectChanges(result.completedTasks) > countProjectChanges(bestResult.completedTasks)) {
+    if (!bestResult || result.score > bestResult.score) {
       bestResult = result;
+      bestSequence = alternatingSequence;
     }
   }
-  return bestResult;
+  const completionOrder = new Map(
+    bestResult.completedTasks.map((task, index) => [task.id, index])
+  );
+  return bestSequence.sort((a, b) => {
+    var _a, _b;
+    const orderA = (_a = completionOrder.get(a.id)) != null ? _a : Infinity;
+    const orderB = (_b = completionOrder.get(b.id)) != null ? _b : Infinity;
+    return orderA - orderB;
+  });
 };
 var generateAlternatingSequence = (tasks, items, getItemId) => {
   const sequence = [];
   const remainingTasks = new Set(tasks);
   const itemsArray = Array.from(items);
   let currentIndex = 0;
-  let cycleCount = 0;
   while (remainingTasks.size > 0) {
     let taskAdded = false;
     for (let i = 0; i < itemsArray.length; i++) {
       const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
-      const task = Array.from(remainingTasks).find(
+      const tasksForCurrentItem = Array.from(remainingTasks).filter(
         (t) => getItemId(t) === currentItemId
       );
-      if (task) {
+      if (tasksForCurrentItem.length > 0) {
+        const task = tasksForCurrentItem[Math.floor(Math.random() * tasksForCurrentItem.length)];
         sequence.push(task);
         remainingTasks.delete(task);
         taskAdded = true;
@@ -270,29 +283,13 @@ var generateAlternatingSequence = (tasks, items, getItemId) => {
       }
     }
     if (!taskAdded) {
-      cycleCount++;
-      if (cycleCount >= 2) {
-        const nextTask = remainingTasks.values().next().value;
-        if (nextTask) {
-          sequence.push(nextTask);
-          remainingTasks.delete(nextTask);
-        }
-      }
-    } else {
-      cycleCount = 0;
+      const nextTask = Array.from(remainingTasks)[0];
+      sequence.push(nextTask);
+      remainingTasks.delete(nextTask);
     }
     currentIndex = (currentIndex + 1) % itemsArray.length;
   }
   return sequence;
-};
-var countProjectChanges = (sequence) => {
-  let changes = 0;
-  for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].milestoneId !== sequence[i - 1].milestoneId) {
-      changes++;
-    }
-  }
-  return changes;
 };
 var getAllTasksFromProjects = (projects, milestones, tasks) => {
   return projects.flatMap(
@@ -336,6 +333,15 @@ var getUniqueMilestones = (tasks) => {
   });
   return milestoneIds;
 };
+var getUniqueDeadlines = (projects) => {
+  const deadlines = /* @__PURE__ */ new Set();
+  projects.forEach((project) => {
+    if (project.deadline) {
+      deadlines.add(project.deadline.toISOString());
+    }
+  });
+  return deadlines;
+};
 
 // src/utils/obsidian/obsidianHelpers.ts
 function ensureValidStatus(status) {
@@ -362,7 +368,7 @@ function ensureValidReference(referenceId, collection, entityType, parentType, p
     return void 0;
   const found = collection.some((item) => item.id === referenceId);
   if (!found) {
-    console.log(
+    logger.warn(
       `Warning: ${entityType} ${referenceId} not found for ${parentType} ${parentId}. Removing invalid reference.`
     );
     return void 0;
@@ -373,7 +379,7 @@ function ensureValidReference(referenceId, collection, entityType, parentType, p
 // src/utils/obsidian/obsidianDataConverter.ts
 function convertObsidianData(data) {
   var _a, _b, _c, _d;
-  console.log(data);
+  logger.verbose("Converting Obsidian data:", data);
   const goals = (((_a = data.goals) == null ? void 0 : _a.values) || []).map(convertGoal);
   const projects = (((_b = data.projects) == null ? void 0 : _b.values) || []).map(convertProject);
   const milestones = (((_c = data.milestones) == null ? void 0 : _c.values) || []).map(
@@ -446,18 +452,24 @@ function convertGoal(obsidianGoal) {
   };
 }
 function convertProject(obsidianProject) {
-  var _a;
+  let deadline = void 0;
+  if (obsidianProject.deadline) {
+    const parsedDate = new Date(obsidianProject.deadline);
+    if (!isNaN(parsedDate.getTime())) {
+      deadline = new Date(parsedDate.getTime());
+    }
+  }
   return {
     type: "project",
-    id: obsidianProject.id || "",
-    name: obsidianProject.name || "",
-    deadline: obsidianProject.deadline ? new Date(obsidianProject.deadline) : void 0,
-    deadlineType: obsidianProject.deadlineType || void 0,
+    id: obsidianProject.id,
+    name: obsidianProject.name,
+    deadline,
+    deadlineType: obsidianProject.deadlineType,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: ((_a = obsidianProject.goal) == null ? void 0 : _a.path) || void 0
+    goalId: obsidianProject.goal ? obsidianProject.goal.path : void 0
   };
 }
 function convertMilestone(obsidianMilestone) {
@@ -487,7 +499,41 @@ function convertTask(obsidianTask) {
   };
 }
 
-// src/utils/crunchUtils.ts
+// src/utils/projectUtils.ts
+function checkDeadlineStatus(completedTasks, projects) {
+  const missedHardDeadlines = [];
+  const missedSoftDeadlines = [];
+  projects.forEach((project) => {
+    if (project.deadline) {
+      const projectTasks = completedTasks.filter(
+        (task) => task.milestoneId && project.milestoneIds.includes(task.milestoneId)
+      );
+      const lastTaskCompletionDate = Math.max(
+        ...projectTasks.map((task) => {
+          var _a;
+          return ((_a = task.completionDate) == null ? void 0 : _a.getTime()) || 0;
+        })
+      );
+      if (lastTaskCompletionDate > project.deadline.getTime()) {
+        if (project.deadlineType === "hard") {
+          missedHardDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        } else {
+          missedSoftDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        }
+      }
+    }
+  });
+  return {
+    allHardDeadlinesMet: missedHardDeadlines.length === 0,
+    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
+    missedHardDeadlines,
+    missedSoftDeadlines
+  };
+}
 function calculateCrunchInfo(projects, endDate) {
   const crunchByProject = {};
   let totalCrunch = 0;
@@ -520,7 +566,7 @@ function optimizeTasks(rawData, convertData = convertObsidianData, optimize = op
   const bestSequence = optimize(projects, goals, milestones, tasks);
   const result = simulate(bestSequence, projects, goals, milestones);
   if (!result || !result.completedTasks || !result.endDate) {
-    console.error("Invalid simulation result:", result);
+    logger.error("Invalid simulation result:", result);
     return createEmptyOptimizationResult();
   }
   const deadlineStatus = checkDeadlineStatus(result.completedTasks, projects);
@@ -531,8 +577,8 @@ function optimizeTasks(rawData, convertData = convertObsidianData, optimize = op
     deadlineStatus,
     crunchInfo
   };
-  logOptimizationResult(optimizationResult);
   checkDeadlines(deadlineStatus);
+  logger.verbose("Optimization result:", optimizationResult);
   return optimizationResult;
 }
 function createEmptyOptimizationResult() {
@@ -557,21 +603,26 @@ function createEmptyOptimizationResult() {
     }
   };
 }
-function logOptimizationResult(result) {
-  console.log("Optimization Result:", JSON.stringify(result, null, 2));
-}
 function checkDeadlines(deadlineStatus) {
   if (!deadlineStatus.allHardDeadlinesMet || !deadlineStatus.allSoftDeadlinesMet) {
-    console.error(
+    logger.error(
       "ERROR: Not all deadlines are met. Task rescheduling may be necessary."
     );
   }
 }
 
+// src/types/settings.ts
+var DEFAULT_SETTINGS = {
+  logLevel: "normal"
+};
+
 // main.ts
 var OptimizeTasksPlugin = class extends import_obsidian.Plugin {
   async onload() {
-    console.log("Loading OptimizeTasks plugin");
+    await this.loadSettings();
+    logger.setLogLevel(this.settings.logLevel);
+    logger.log("Loading OptimizeTasks plugin");
+    this.addSettingTab(new OptimizeTasksSettingTab(this.app, this));
     try {
       this.addCommand({
         id: "test-optimize-tasks",
@@ -584,11 +635,39 @@ var OptimizeTasksPlugin = class extends import_obsidian.Plugin {
         return optimizeTasks(data);
       };
     } catch (error) {
-      console.error("Error loading OptimizeTasks plugin:", error);
+      logger.error("Error loading OptimizeTasks plugin:", error);
     }
   }
   onunload() {
-    console.log("Unloading OptimizeTasks plugin");
+    logger.log("Unloading OptimizeTasks plugin");
     delete window.optimizeTasks;
+  }
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+  async saveSettings() {
+    await this.saveData(this.settings);
+    logger.setLogLevel(this.settings.logLevel);
+  }
+};
+var OptimizeTasksSettingTab = class extends import_obsidian.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    new import_obsidian.Setting(containerEl).setName("Log Level").setDesc("Set the level of logging for the plugin").addDropdown(
+      (dropdown) => dropdown.addOptions({
+        off: "Off",
+        errors: "Errors only",
+        normal: "Normal",
+        verbose: "Verbose"
+      }).setValue(this.plugin.settings.logLevel).onChange(async (value) => {
+        this.plugin.settings.logLevel = value;
+        await this.plugin.saveSettings();
+      })
+    );
   }
 };

@@ -1,5 +1,9 @@
-import { calculateCrunchInfo } from "../../src/utils/crunchUtils";
-import { Project } from "../../src/types";
+import {
+  calculateCrunchInfo,
+  getProjectDeadline,
+  checkDeadlineStatus,
+} from "../../src/utils/projectUtils";
+import { Project, Task, Status } from "../../src/types";
 
 describe("calculateCrunchInfo", () => {
   const baseDate = new Date("2023-05-01");
@@ -280,5 +284,218 @@ describe("calculateCrunchInfo", () => {
     expect(result.latestCrunch).toBeLessThanOrEqual(3650); // 10 years maximum
     expect(result.averageCrunch).toBeGreaterThanOrEqual(0);
     expect(Object.keys(result.crunchByProject).length).toBe(2);
+  });
+});
+
+describe("getProjectDeadline", () => {
+  it("should return the correct deadline when it exists", () => {
+    const task: Task = {
+      id: "1",
+      name: "Task 1",
+      status: "in-flight",
+      dependencyIds: [],
+      duration: 1,
+      timeSpent: 0,
+      type: "task",
+    };
+    const tasks: Task[] = [task];
+    const getItemId = (t: Task) => (t.id === "1" ? "2023-05-15" : undefined);
+
+    const result = getProjectDeadline(task, tasks, getItemId);
+    expect(result).toEqual(new Date("2023-05-15"));
+  });
+
+  it("should return undefined when no deadline exists", () => {
+    const task: Task = {
+      id: "1",
+      name: "Task 1",
+      status: "in-flight",
+      dependencyIds: [],
+      duration: 1,
+      timeSpent: 0,
+      type: "task",
+    };
+    const tasks: Task[] = [task];
+    const getItemId = (t: Task) => undefined;
+
+    const result = getProjectDeadline(task, tasks, getItemId);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("checkDeadlineStatus", () => {
+  const baseProject: Project = {
+    id: "1",
+    name: "Project 1",
+    milestoneIds: ["m1"],
+    status: "in-flight",
+    excitement: 3,
+    viability: 3,
+    type: "project",
+    deadline: new Date("2023-05-15"),
+  };
+
+  it("should return all deadlines met when no deadlines are missed", () => {
+    const completedTasks: Task[] = [
+      {
+        id: "t1",
+        name: "Task 1",
+        milestoneId: "m1",
+        completionDate: new Date("2023-05-14"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+    ];
+    const projects: Project[] = [baseProject];
+
+    const result = checkDeadlineStatus(completedTasks, projects);
+    expect(result).toEqual({
+      allHardDeadlinesMet: true,
+      allSoftDeadlinesMet: true,
+      missedHardDeadlines: [],
+      missedSoftDeadlines: [],
+    });
+  });
+
+  it("should detect missed hard deadlines", () => {
+    const completedTasks: Task[] = [
+      {
+        id: "t1",
+        name: "Task 1",
+        milestoneId: "m1",
+        completionDate: new Date("2023-05-16"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+    ];
+    const projects: Project[] = [
+      {
+        ...baseProject,
+        deadlineType: "hard",
+      },
+    ];
+
+    const result = checkDeadlineStatus(completedTasks, projects);
+    expect(result).toEqual({
+      allHardDeadlinesMet: false,
+      allSoftDeadlinesMet: true,
+      missedHardDeadlines: ["Project 1: 2023-05-15T00:00:00.000Z"],
+      missedSoftDeadlines: [],
+    });
+  });
+
+  it("should detect missed soft deadlines", () => {
+    const completedTasks: Task[] = [
+      {
+        id: "t1",
+        name: "Task 1",
+        milestoneId: "m1",
+        completionDate: new Date("2023-05-16"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+    ];
+    const projects: Project[] = [
+      {
+        ...baseProject,
+        deadlineType: "soft",
+      },
+    ];
+
+    const result = checkDeadlineStatus(completedTasks, projects);
+    expect(result).toEqual({
+      allHardDeadlinesMet: true,
+      allSoftDeadlinesMet: false,
+      missedHardDeadlines: [],
+      missedSoftDeadlines: ["Project 1: 2023-05-15T00:00:00.000Z"],
+    });
+  });
+
+  it("should handle projects without deadlines", () => {
+    const completedTasks: Task[] = [
+      {
+        id: "t1",
+        name: "Task 1",
+        milestoneId: "m1",
+        completionDate: new Date("2023-05-16"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+    ];
+    const projects: Project[] = [
+      {
+        ...baseProject,
+        deadline: undefined,
+      },
+    ];
+
+    const result = checkDeadlineStatus(completedTasks, projects);
+    expect(result).toEqual({
+      allHardDeadlinesMet: true,
+      allSoftDeadlinesMet: true,
+      missedHardDeadlines: [],
+      missedSoftDeadlines: [],
+    });
+  });
+
+  it("should handle multiple projects with mixed deadline types", () => {
+    const completedTasks: Task[] = [
+      {
+        id: "t1",
+        name: "Task 1",
+        milestoneId: "m1",
+        completionDate: new Date("2023-05-16"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+      {
+        id: "t2",
+        name: "Task 2",
+        milestoneId: "m2",
+        completionDate: new Date("2023-05-21"),
+        status: "complete",
+        dependencyIds: [],
+        duration: 1,
+        timeSpent: 1,
+        type: "task",
+      },
+    ];
+    const projects: Project[] = [
+      {
+        ...baseProject,
+        deadlineType: "hard",
+      },
+      {
+        ...baseProject,
+        id: "2",
+        name: "Project 2",
+        milestoneIds: ["m2"],
+        deadline: new Date("2023-05-20"),
+        deadlineType: "soft",
+      },
+    ];
+
+    const result = checkDeadlineStatus(completedTasks, projects);
+    expect(result).toEqual({
+      allHardDeadlinesMet: false,
+      allSoftDeadlinesMet: false,
+      missedHardDeadlines: ["Project 1: 2023-05-15T00:00:00.000Z"],
+      missedSoftDeadlines: ["Project 2: 2023-05-20T00:00:00.000Z"],
+    });
   });
 });

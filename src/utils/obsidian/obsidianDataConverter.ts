@@ -12,6 +12,7 @@ import {
   ensureValidViability,
   ensureValidReference,
 } from "./obsidianHelpers";
+import { logger } from "../logger";
 
 export function convertObsidianData(data: ObsidianDataViewData): {
   goals: Goal[];
@@ -19,7 +20,7 @@ export function convertObsidianData(data: ObsidianDataViewData): {
   milestones: Milestone[];
   tasks: Task[];
 } {
-  console.log(data);
+  logger.verbose("Converting Obsidian data:", data);
   const goals: Goal[] = (data.goals?.values || []).map(convertGoal);
   const projects: Project[] = (data.projects?.values || []).map(convertProject);
   const milestones: Milestone[] = (data.milestones?.values || []).map(
@@ -95,19 +96,25 @@ function convertGoal(obsidianGoal: ObsidianGoal): Goal {
 }
 
 function convertProject(obsidianProject: ObsidianProject): Project {
+  let deadline: Date | undefined = undefined;
+  if (obsidianProject.deadline) {
+    const parsedDate = new Date(obsidianProject.deadline);
+    if (!isNaN(parsedDate.getTime())) {
+      deadline = new Date(parsedDate.getTime());
+    }
+  }
+
   return {
     type: "project",
-    id: obsidianProject.id || "",
-    name: obsidianProject.name || "",
-    deadline: obsidianProject.deadline
-      ? new Date(obsidianProject.deadline)
-      : undefined,
-    deadlineType: obsidianProject.deadlineType || undefined,
+    id: obsidianProject.id,
+    name: obsidianProject.name,
+    deadline: deadline,
+    deadlineType: obsidianProject.deadlineType,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),
     milestoneIds: [],
-    goalId: obsidianProject.goal?.path || undefined,
+    goalId: obsidianProject.goal ? obsidianProject.goal.path : undefined,
   };
 }
 

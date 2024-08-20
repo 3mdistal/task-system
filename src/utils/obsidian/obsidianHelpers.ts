@@ -1,4 +1,5 @@
 import { Status } from "../../types";
+import { logger } from "../logger";
 
 // Helper function to ensure we have a valid Status
 export function ensureValidStatus(status: any): Status {
@@ -34,7 +35,7 @@ export function ensureValidReference<T extends { id: string }>(
 
   const found = collection.some((item) => item.id === referenceId);
   if (!found) {
-    console.log(
+    logger.warn(
       `Warning: ${entityType} ${referenceId} not found for ${parentType} ${parentId}. Removing invalid reference.`
     );
     return undefined;

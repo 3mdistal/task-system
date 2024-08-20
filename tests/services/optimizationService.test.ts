@@ -107,7 +107,7 @@ describe("optimizationService", () => {
     const result = optimizeSequence([mockProject], [], [mockMilestone], tasks);
 
     expect(result).toEqual(tasks);
-    expect(simulateTaskSequence).toHaveBeenCalledTimes(3); // Once for each strategy
+    expect(simulateTaskSequence).toHaveBeenCalledTimes(4); // Update to 4 calls (including deadlines)
   });
 
   it("should respect task dependencies", () => {
@@ -266,17 +266,23 @@ describe("optimizationService", () => {
         completedTasks: [tasks[1], tasks[2], tasks[0]],
         endDate: new Date("2023-12-16"),
       },
+      {
+        score: 95,
+        completedTasks: [tasks[0], tasks[2], tasks[1]],
+        endDate: new Date("2023-12-15"),
+      },
     ];
 
     (simulateTaskSequence as jest.Mock)
       .mockReturnValueOnce(mockSimulationResults[0])
       .mockReturnValueOnce(mockSimulationResults[1])
-      .mockReturnValueOnce(mockSimulationResults[2]);
+      .mockReturnValueOnce(mockSimulationResults[2])
+      .mockReturnValueOnce(mockSimulationResults[3]);
 
     const result = optimizeSequence([mockProject], [], [mockMilestone], tasks);
 
     expect(result).toEqual([tasks[2], tasks[0], tasks[1]]);
-    expect(simulateTaskSequence).toHaveBeenCalledTimes(3);
+    expect(simulateTaskSequence).toHaveBeenCalledTimes(4);
   });
 
   it("should handle multiple projects with different goals", () => {
@@ -385,7 +391,7 @@ describe("optimizationService", () => {
     ).toBeTruthy();
 
     // Verify that simulateTaskSequence was called for each strategy
-    expect(simulateTaskSequence).toHaveBeenCalledTimes(3);
+    expect(simulateTaskSequence).toHaveBeenCalledTimes(4);
 
     // Verify that tasks maintain their project and goal associations
     result.forEach((task) => {
@@ -546,6 +552,53 @@ describe("optimizationService", () => {
     });
 
     // Verify that simulateTaskSequence was called for each strategy
-    expect(simulateTaskSequence).toHaveBeenCalledTimes(3);
+    expect(simulateTaskSequence).toHaveBeenCalledTimes(4);
+  });
+
+  // Add a new test for deadline-based optimization
+  it("should prioritize tasks based on project deadlines", () => {
+    const earlyProject = createMockProject(
+      "Early Project",
+      new Date("2023-06-30"),
+      "hard"
+    );
+    const lateProject = createMockProject(
+      "Late Project",
+      new Date("2023-12-31"),
+      "soft"
+    );
+
+    const earlyMilestone = createMockMilestone(
+      "Early Milestone",
+      earlyProject.id
+    );
+    const lateMilestone = createMockMilestone("Late Milestone", lateProject.id);
+
+    const tasks = [
+      { ...createMockTask("Early Task", 2), milestoneId: earlyMilestone.id },
+      { ...createMockTask("Late Task", 2), milestoneId: lateMilestone.id },
+    ];
+
+    earlyProject.milestoneIds = [earlyMilestone.id];
+    lateProject.milestoneIds = [lateMilestone.id];
+    earlyMilestone.taskIds = [tasks[0].id];
+    lateMilestone.taskIds = [tasks[1].id];
+
+    (simulateTaskSequence as jest.Mock).mockImplementation((tasks) => ({
+      score: 100,
+      completedTasks: tasks,
+      endDate: new Date("2023-12-15"),
+    }));
+
+    const result = optimizeSequence(
+      [earlyProject, lateProject],
+      [],
+      [earlyMilestone, lateMilestone],
+      tasks
+    );
+
+    expect(result[0].name).toBe("Early Task");
+    expect(result[1].name).toBe("Late Task");
+    expect(simulateTaskSequence).toHaveBeenCalledTimes(4);
   });
 });

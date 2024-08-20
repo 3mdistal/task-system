@@ -44,31 +44,22 @@ export const optimizeSequence = (
       items: getUniqueMilestones(allTasks),
       getItemId: (task: Task) => task.milestoneId,
     },
+    {
+      name: "deadlines",
+      items: getUniqueDeadlines(projects),
+      getItemId: (task: Task) => {
+        const milestone = milestones.find((m) => m.id === task.milestoneId);
+        if (milestone) {
+          const project = projects.find((p) => p.id === milestone.projectId);
+          return project?.deadline?.toISOString();
+        }
+        return undefined;
+      },
+    },
   ];
 
-  const result = tryOptimizationStrategies(
-    allTasks,
-    strategies,
-    projects,
-    goals,
-    milestones
-  );
-
-  return result.completedTasks;
-};
-
-const tryOptimizationStrategies = (
-  allTasks: Task[],
-  strategies: OptimizationStrategy[],
-  projects: Project[],
-  goals: Goal[],
-  milestones: Milestone[]
-): SimulationResult => {
-  let bestResult: SimulationResult = {
-    score: -Infinity,
-    completedTasks: [],
-    endDate: new Date(),
-  };
+  let bestResult: SimulationResult | null = null;
+  let bestSequence: Task[] = [];
 
   for (const strategy of strategies) {
     const alternatingSequence = generateAlternatingSequence(
@@ -82,17 +73,23 @@ const tryOptimizationStrategies = (
       goals,
       milestones
     );
-    if (
-      result.score > bestResult.score ||
-      (result.score === bestResult.score &&
-        countProjectChanges(result.completedTasks) >
-          countProjectChanges(bestResult.completedTasks))
-    ) {
+
+    if (!bestResult || result.score > bestResult.score) {
       bestResult = result;
+      bestSequence = alternatingSequence;
     }
   }
 
-  return bestResult;
+  // Sort the best sequence based on the completion order in the simulation result
+  const completionOrder = new Map(
+    bestResult!.completedTasks.map((task, index) => [task.id, index])
+  );
+
+  return bestSequence.sort((a, b) => {
+    const orderA = completionOrder.get(a.id) ?? Infinity;
+    const orderB = completionOrder.get(b.id) ?? Infinity;
+    return orderA - orderB;
+  });
 };
 
 const generateAlternatingSequence = (
@@ -104,17 +101,20 @@ const generateAlternatingSequence = (
   const remainingTasks = new Set(tasks);
   const itemsArray = Array.from(items);
   let currentIndex = 0;
-  let cycleCount = 0;
 
   while (remainingTasks.size > 0) {
     let taskAdded = false;
     for (let i = 0; i < itemsArray.length; i++) {
       const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
-      const task = Array.from(remainingTasks).find(
+      const tasksForCurrentItem = Array.from(remainingTasks).filter(
         (t) => getItemId(t) === currentItemId
       );
 
-      if (task) {
+      if (tasksForCurrentItem.length > 0) {
+        const task =
+          tasksForCurrentItem[
+            Math.floor(Math.random() * tasksForCurrentItem.length)
+          ];
         sequence.push(task);
         remainingTasks.delete(task);
         taskAdded = true;
@@ -123,32 +123,15 @@ const generateAlternatingSequence = (
     }
 
     if (!taskAdded) {
-      cycleCount++;
-      if (cycleCount >= 2) {
-        const nextTask = remainingTasks.values().next().value;
-        if (nextTask) {
-          sequence.push(nextTask);
-          remainingTasks.delete(nextTask);
-        }
-      }
-    } else {
-      cycleCount = 0;
+      const nextTask = Array.from(remainingTasks)[0];
+      sequence.push(nextTask);
+      remainingTasks.delete(nextTask);
     }
 
     currentIndex = (currentIndex + 1) % itemsArray.length;
   }
 
   return sequence;
-};
-
-const countProjectChanges = (sequence: Task[]): number => {
-  let changes = 0;
-  for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].milestoneId !== sequence[i - 1].milestoneId) {
-      changes++;
-    }
-  }
-  return changes;
 };
 
 interface OptimizationStrategy {
@@ -216,4 +199,14 @@ const getUniqueMilestones = (tasks: Task[]): Set<string> => {
     }
   });
   return milestoneIds;
+};
+
+const getUniqueDeadlines = (projects: Project[]): Set<string> => {
+  const deadlines = new Set<string>();
+  projects.forEach((project) => {
+    if (project.deadline) {
+      deadlines.add(project.deadline.toISOString());
+    }
+  });
+  return deadlines;
 };

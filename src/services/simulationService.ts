@@ -2,6 +2,7 @@ import { Task, Project, SimulationState, Milestone, Goal } from "../types";
 import { addDays } from "../utils/dateUtils";
 import { calculateTaskScore } from "../utils/calculationUtils";
 import type { SimulationResult } from "./optimizationService";
+import { logger } from "../utils/logger";
 
 export const simulateTaskSequence = (
   tasks: Task[],
@@ -26,7 +27,7 @@ export const simulateTaskSequence = (
     }
 
     if (!taskProcessed) {
-      console.warn("No tasks could be processed. Breaking loop.");
+      logger.warn("No tasks could be processed. Breaking loop.");
       break;
     }
   }

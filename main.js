@@ -188,10 +188,6 @@ var isProjectCompleted = (project, completedTasks, milestones, goals) => {
 };
 
 // src/utils/projectUtils.ts
-function getProjectDeadline(task, tasks, getItemId) {
-  const deadlineStr = getItemId(task);
-  return deadlineStr ? new Date(deadlineStr) : void 0;
-}
 function checkDeadlineStatus(completedTasks, projects) {
   const missedHardDeadlines = [];
   const missedSoftDeadlines = [];
@@ -298,21 +294,8 @@ var optimizeSequence = (projects, goals, milestones, tasks) => {
       }
     }
   ];
-  const result = tryOptimizationStrategies(
-    allTasks,
-    strategies,
-    projects,
-    goals,
-    milestones
-  );
-  return result.completedTasks;
-};
-var tryOptimizationStrategies = (allTasks, strategies, projects, goals, milestones) => {
-  let bestResult = {
-    score: -Infinity,
-    completedTasks: [],
-    endDate: new Date()
-  };
+  let bestResult = null;
+  let bestSequence = [];
   for (const strategy of strategies) {
     const alternatingSequence = generateAlternatingSequence(
       allTasks,
@@ -325,21 +308,18 @@ var tryOptimizationStrategies = (allTasks, strategies, projects, goals, mileston
       goals,
       milestones
     );
-    const deadlineStatus = checkDeadlineStatus(result.completedTasks, projects);
-    if (deadlineStatus.allHardDeadlinesMet && (result.score > bestResult.score || !checkDeadlineStatus(bestResult.completedTasks, projects).allHardDeadlinesMet)) {
+    if (!bestResult || result.score > bestResult.score) {
       bestResult = result;
-    } else if (deadlineStatus.allHardDeadlinesMet === checkDeadlineStatus(bestResult.completedTasks, projects).allHardDeadlinesMet && (result.score > bestResult.score || result.score === bestResult.score && countProjectChanges(result.completedTasks) > countProjectChanges(bestResult.completedTasks))) {
-      bestResult = result;
+      bestSequence = alternatingSequence;
     }
   }
-  return bestResult;
+  return bestSequence;
 };
 var generateAlternatingSequence = (tasks, items, getItemId) => {
   const sequence = [];
   const remainingTasks = new Set(tasks);
-  const itemsArray = Array.from(items).sort();
+  const itemsArray = Array.from(items);
   let currentIndex = 0;
-  let cycleCount = 0;
   while (remainingTasks.size > 0) {
     let taskAdded = false;
     for (let i = 0; i < itemsArray.length; i++) {
@@ -348,12 +328,7 @@ var generateAlternatingSequence = (tasks, items, getItemId) => {
         (t) => getItemId(t) === currentItemId
       );
       if (tasksForCurrentItem.length > 0) {
-        const sortedTasks = tasksForCurrentItem.sort((a, b) => {
-          const deadlineA = getProjectDeadline(a, tasks, getItemId);
-          const deadlineB = getProjectDeadline(b, tasks, getItemId);
-          return deadlineA && deadlineB ? deadlineA.getTime() - deadlineB.getTime() : 0;
-        });
-        const task = sortedTasks[0];
+        const task = tasksForCurrentItem[Math.floor(Math.random() * tasksForCurrentItem.length)];
         sequence.push(task);
         remainingTasks.delete(task);
         taskAdded = true;
@@ -361,29 +336,13 @@ var generateAlternatingSequence = (tasks, items, getItemId) => {
       }
     }
     if (!taskAdded) {
-      cycleCount++;
-      if (cycleCount >= 2) {
-        const nextTask = remainingTasks.values().next().value;
-        if (nextTask) {
-          sequence.push(nextTask);
-          remainingTasks.delete(nextTask);
-        }
-      }
-    } else {
-      cycleCount = 0;
+      const nextTask = Array.from(remainingTasks)[0];
+      sequence.push(nextTask);
+      remainingTasks.delete(nextTask);
     }
     currentIndex = (currentIndex + 1) % itemsArray.length;
   }
   return sequence;
-};
-var countProjectChanges = (sequence) => {
-  let changes = 0;
-  for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].milestoneId !== sequence[i - 1].milestoneId) {
-      changes++;
-    }
-  }
-  return changes;
 };
 var getAllTasksFromProjects = (projects, milestones, tasks) => {
   return projects.flatMap(
@@ -611,6 +570,7 @@ function optimizeTasks(rawData, convertData = convertObsidianData, optimize = op
     crunchInfo
   };
   checkDeadlines(deadlineStatus);
+  logger.verbose("Optimization result:", optimizationResult);
   return optimizationResult;
 }
 function createEmptyOptimizationResult() {

@@ -33,6 +33,7 @@ export function optimizeTasks(
 
   checkDeadlines(deadlineStatus);
 
+  logger.verbose("Optimization result:", optimizationResult);
   return optimizationResult;
 }
 

@@ -59,15 +59,71 @@ export const optimizeSequence = (
     },
   ];
 
-  const result = tryOptimizationStrategies(
-    allTasks,
-    strategies,
-    projects,
-    goals,
-    milestones
-  );
+  let bestResult: SimulationResult | null = null;
+  let bestSequence: Task[] = [];
 
-  return result.completedTasks;
+  for (const strategy of strategies) {
+    const alternatingSequence = generateAlternatingSequence(
+      allTasks,
+      strategy.items,
+      strategy.getItemId
+    );
+    const result = simulateTaskSequence(
+      alternatingSequence,
+      projects,
+      goals,
+      milestones
+    );
+
+    if (!bestResult || result.score > bestResult.score) {
+      bestResult = result;
+      bestSequence = alternatingSequence;
+    }
+  }
+
+  return bestSequence;
+};
+
+const generateAlternatingSequence = (
+  tasks: Task[],
+  items: Set<string>,
+  getItemId: (task: Task) => string | undefined
+): Task[] => {
+  const sequence: Task[] = [];
+  const remainingTasks = new Set(tasks);
+  const itemsArray = Array.from(items);
+  let currentIndex = 0;
+
+  while (remainingTasks.size > 0) {
+    let taskAdded = false;
+    for (let i = 0; i < itemsArray.length; i++) {
+      const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
+      const tasksForCurrentItem = Array.from(remainingTasks).filter(
+        (t) => getItemId(t) === currentItemId
+      );
+
+      if (tasksForCurrentItem.length > 0) {
+        const task =
+          tasksForCurrentItem[
+            Math.floor(Math.random() * tasksForCurrentItem.length)
+          ];
+        sequence.push(task);
+        remainingTasks.delete(task);
+        taskAdded = true;
+        break;
+      }
+    }
+
+    if (!taskAdded) {
+      const nextTask = Array.from(remainingTasks)[0];
+      sequence.push(nextTask);
+      remainingTasks.delete(nextTask);
+    }
+
+    currentIndex = (currentIndex + 1) % itemsArray.length;
+  }
+
+  return sequence;
 };
 
 const tryOptimizationStrategies = (
@@ -119,62 +175,6 @@ const tryOptimizationStrategies = (
   }
 
   return bestResult;
-};
-
-const generateAlternatingSequence = (
-  tasks: Task[],
-  items: Set<string>,
-  getItemId: (task: Task) => string | undefined
-): Task[] => {
-  const sequence: Task[] = [];
-  const remainingTasks = new Set(tasks);
-  const itemsArray = Array.from(items).sort(); // Sort deadlines in ascending order
-  let currentIndex = 0;
-  let cycleCount = 0;
-
-  while (remainingTasks.size > 0) {
-    let taskAdded = false;
-    for (let i = 0; i < itemsArray.length; i++) {
-      const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
-      const tasksForCurrentItem = Array.from(remainingTasks).filter(
-        (t) => getItemId(t) === currentItemId
-      );
-
-      if (tasksForCurrentItem.length > 0) {
-        // Sort tasks by their project's deadline (if available)
-        const sortedTasks = tasksForCurrentItem.sort((a, b) => {
-          const deadlineA = getProjectDeadline(a, tasks, getItemId);
-          const deadlineB = getProjectDeadline(b, tasks, getItemId);
-          return deadlineA && deadlineB
-            ? deadlineA.getTime() - deadlineB.getTime()
-            : 0;
-        });
-
-        const task = sortedTasks[0];
-        sequence.push(task);
-        remainingTasks.delete(task);
-        taskAdded = true;
-        break;
-      }
-    }
-
-    if (!taskAdded) {
-      cycleCount++;
-      if (cycleCount >= 2) {
-        const nextTask = remainingTasks.values().next().value;
-        if (nextTask) {
-          sequence.push(nextTask);
-          remainingTasks.delete(nextTask);
-        }
-      }
-    } else {
-      cycleCount = 0;
-    }
-
-    currentIndex = (currentIndex + 1) % itemsArray.length;
-  }
-
-  return sequence;
 };
 
 const countProjectChanges = (sequence: Task[]): number => {

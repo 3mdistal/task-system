@@ -2,8 +2,8 @@ import { ObsidianDataViewData, OptimizationResult } from "./types";
 import { optimizeSequence } from "./services/optimizationService";
 import { simulateTaskSequence } from "./services/simulationService";
 import { convertObsidianData } from "./utils/obsidian/obsidianDataConverter";
-import { checkDeadlineStatus } from "./utils/dateUtils";
-import { calculateCrunchInfo } from "./utils/crunchUtils";
+import { checkDeadlineStatus } from "./utils/projectUtils";
+import { calculateCrunchInfo } from "./utils/projectUtils";
 
 export function optimizeTasks(
   rawData: ObsidianDataViewData,

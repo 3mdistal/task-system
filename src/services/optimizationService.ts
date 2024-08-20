@@ -1,5 +1,6 @@
 import { Project, Task, Goal, Milestone } from "../types";
 import { simulateTaskSequence } from "./simulationService";
+import { checkDeadlineStatus, getProjectDeadline } from "../utils/projectUtils";
 
 export interface SimulationResult {
   score: number;
@@ -44,6 +45,18 @@ export const optimizeSequence = (
       items: getUniqueMilestones(allTasks),
       getItemId: (task: Task) => task.milestoneId,
     },
+    {
+      name: "deadlines",
+      items: getUniqueDeadlines(projects),
+      getItemId: (task: Task) => {
+        const milestone = milestones.find((m) => m.id === task.milestoneId);
+        if (milestone) {
+          const project = projects.find((p) => p.id === milestone.projectId);
+          return project?.deadline?.toISOString();
+        }
+        return undefined;
+      },
+    },
   ];
 
   const result = tryOptimizationStrategies(
@@ -82,11 +95,24 @@ const tryOptimizationStrategies = (
       goals,
       milestones
     );
+
+    const deadlineStatus = checkDeadlineStatus(result.completedTasks, projects);
+
     if (
-      result.score > bestResult.score ||
-      (result.score === bestResult.score &&
-        countProjectChanges(result.completedTasks) >
-          countProjectChanges(bestResult.completedTasks))
+      deadlineStatus.allHardDeadlinesMet &&
+      (result.score > bestResult.score ||
+        !checkDeadlineStatus(bestResult.completedTasks, projects)
+          .allHardDeadlinesMet)
+    ) {
+      bestResult = result;
+    } else if (
+      deadlineStatus.allHardDeadlinesMet ===
+        checkDeadlineStatus(bestResult.completedTasks, projects)
+          .allHardDeadlinesMet &&
+      (result.score > bestResult.score ||
+        (result.score === bestResult.score &&
+          countProjectChanges(result.completedTasks) >
+            countProjectChanges(bestResult.completedTasks)))
     ) {
       bestResult = result;
     }
@@ -102,7 +128,7 @@ const generateAlternatingSequence = (
 ): Task[] => {
   const sequence: Task[] = [];
   const remainingTasks = new Set(tasks);
-  const itemsArray = Array.from(items);
+  const itemsArray = Array.from(items).sort(); // Sort deadlines in ascending order
   let currentIndex = 0;
   let cycleCount = 0;
 
@@ -110,11 +136,21 @@ const generateAlternatingSequence = (
     let taskAdded = false;
     for (let i = 0; i < itemsArray.length; i++) {
       const currentItemId = itemsArray[(currentIndex + i) % itemsArray.length];
-      const task = Array.from(remainingTasks).find(
+      const tasksForCurrentItem = Array.from(remainingTasks).filter(
         (t) => getItemId(t) === currentItemId
       );
 
-      if (task) {
+      if (tasksForCurrentItem.length > 0) {
+        // Sort tasks by their project's deadline (if available)
+        const sortedTasks = tasksForCurrentItem.sort((a, b) => {
+          const deadlineA = getProjectDeadline(a, tasks, getItemId);
+          const deadlineB = getProjectDeadline(b, tasks, getItemId);
+          return deadlineA && deadlineB
+            ? deadlineA.getTime() - deadlineB.getTime()
+            : 0;
+        });
+
+        const task = sortedTasks[0];
         sequence.push(task);
         remainingTasks.delete(task);
         taskAdded = true;
@@ -216,4 +252,14 @@ const getUniqueMilestones = (tasks: Task[]): Set<string> => {
     }
   });
   return milestoneIds;
+};
+
+const getUniqueDeadlines = (projects: Project[]): Set<string> => {
+  const deadlines = new Set<string>();
+  projects.forEach((project) => {
+    if (project.deadline) {
+      deadlines.add(project.deadline.toISOString());
+    }
+  });
+  return deadlines;
 };

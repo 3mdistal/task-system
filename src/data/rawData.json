@@ -2,14 +2,14 @@
   "goals": {
     "values": [
       {
-        "name": "Establish a maintainable self-care routine",
-        "id": "Aspirations/Goals/Establish a maintainable self-care routine.md",
+        "name": "Become a master web designer and developer",
+        "id": "Aspirations/Goals/Become a master web designer and developer.md",
         "type": "goal",
         "status": "in-flight"
       },
       {
-        "name": "Become a master web designer and developer",
-        "id": "Aspirations/Goals/Become a master web designer and developer.md",
+        "name": "Establish a maintainable self-care routine",
+        "id": "Aspirations/Goals/Establish a maintainable self-care routine.md",
         "type": "goal",
         "status": "in-flight"
       },
@@ -52,11 +52,12 @@
   "projects": {
     "values": [
       {
-        "name": "Birds of Malaiseville 2.0",
-        "id": "Aspirations/Projects/Birds of Malaiseville 2.0.md",
+        "name": "`alicealexandra.com` 3.0",
+        "id": "Aspirations/Projects/`alicealexandra.com` 3.0.md",
         "type": "project",
         "status": "raw",
-        "deadline": "2024-11-01T00:00:00.000-04:00",
+        "deadline": null,
+        "deadlineType": null,
         "goal": {
           "path": "Aspirations/Goals/Become a master web designer and developer.md",
           "embed": false,
@@ -64,34 +65,12 @@
         }
       },
       {
-        "name": "Site redesign - `shoroukelkobrsi.com`",
-        "id": "Aspirations/Projects/Site redesign - `shoroukelkobrsi.com`.md",
-        "type": "project",
-        "status": "in-flight",
-        "deadline": "2024-09-01T00:00:00.000-04:00",
-        "excitement": 4,
-        "viability": 5
-      },
-      {
-        "name": "Task system",
-        "id": "Aspirations/Projects/Task system.md",
-        "type": "project",
-        "status": "in-flight",
-        "deadline": null,
-        "excitement": 5,
-        "viability": 5,
-        "goal": {
-          "path": "Aspirations/Projects/Task system.md",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "`alicealexandra.com` 3.0",
-        "id": "Aspirations/Projects/`alicealexandra.com` 3.0.md",
+        "name": "Birds of Malaiseville 2.0",
+        "id": "Aspirations/Projects/Birds of Malaiseville 2.0.md",
         "type": "project",
         "status": "raw",
-        "deadline": null,
+        "deadline": "2024-11-01T00:00:00.000-04:00",
+        "deadlineType": "soft",
         "goal": {
           "path": "Aspirations/Goals/Become a master web designer and developer.md",
           "embed": false,
@@ -104,6 +83,7 @@
         "type": "project",
         "status": "backlog",
         "deadline": null,
+        "deadlineType": null,
         "goal": {
           "path": "Aspirations/Goals/Speak Arabic fluently.md",
           "embed": false,
@@ -116,12 +96,34 @@
         "type": "project",
         "status": "in-flight",
         "deadline": null,
+        "deadlineType": null,
         "goal": {
           "path": "Aspirations/Goals/Establish a maintainable self-care routine.md",
           "display": "Establish a maintainable self-care routine",
           "embed": false,
           "type": "file"
         }
+      },
+      {
+        "name": "Site redesign - `shoroukelkobrsi.com`",
+        "id": "Aspirations/Projects/Site redesign - `shoroukelkobrsi.com`.md",
+        "type": "project",
+        "status": "in-flight",
+        "deadline": "2024-09-15T00:00:00.000-04:00",
+        "deadlineType": "hard",
+        "excitement": 4,
+        "viability": 5
+      },
+      {
+        "name": "Task system",
+        "id": "Aspirations/Projects/Task system.md",
+        "type": "project",
+        "status": "in-flight",
+        "deadline": null,
+        "deadlineType": null,
+        "excitement": 5,
+        "viability": 5,
+        "goal": null
       }
     ],
     "settings": {
@@ -168,6 +170,18 @@
         }
       },
       {
+        "name": "Content and information setup",
+        "id": "Aspirations/Milestones/Content and information setup.md",
+        "type": "milestone",
+        "status": "in-flight",
+        "dependencies": null,
+        "project": {
+          "path": "Aspirations/Projects/Site redesign - `shoroukelkobrsi.com`.md",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
         "name": "Get all data into Obsidian",
         "id": "Aspirations/Milestones/Get all data into Obsidian.md",
         "type": "milestone",
@@ -187,24 +201,6 @@
         "dependencies": null,
         "project": {
           "path": "Aspirations/Projects/Task system.md",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "Graybox the website",
-        "id": "Aspirations/Milestones/Graybox the website.md",
-        "type": "milestone",
-        "status": "in-flight",
-        "dependencies": [
-          {
-            "path": "Aspirations/Milestones/Shorouk can use Payload.md",
-            "embed": false,
-            "type": "file"
-          }
-        ],
-        "project": {
-          "path": "Aspirations/Projects/Site redesign - `shoroukelkobrsi.com`.md",
           "embed": false,
           "type": "file"
         }
@@ -234,10 +230,10 @@
         }
       },
       {
-        "name": "Shorouk can use Payload",
-        "id": "Aspirations/Milestones/Shorouk can use Payload.md",
+        "name": "Video setup",
+        "id": "Aspirations/Milestones/Video setup.md",
         "type": "milestone",
-        "status": "in-flight",
+        "status": "backlog",
         "dependencies": null,
         "project": {
           "path": "Aspirations/Projects/Site redesign - `shoroukelkobrsi.com`.md",
@@ -280,13 +276,15 @@
       {
         "name": "Think about a money or budget or philosophy section for Obsidian",
         "id": "Aspirations/Ideas/Think about a money or budget or philosophy section for Obsidian.md",
-        "type": "task"
+        "type": "task",
+        "milestone": null
       },
       {
         "name": "Brainstorm on other imports from over the years",
         "id": "Aspirations/Tasks/Brainstorm on other imports from over the years.md",
         "type": "task",
         "status": "backlog",
+        "duration": 1,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -295,48 +293,27 @@
         }
       },
       {
-        "name": "Get Vercel data in, including self-review",
-        "id": "Aspirations/Tasks/Get Vercel data in, including self-review.md",
-        "type": "task",
-        "milestone": {
-          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
-          "display": "Get all data into Obsidian",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "Get scroll-driven animations working",
-        "id": "Aspirations/Tasks/Get scroll-driven animations working.md",
-        "type": "task",
-        "status": "in-flight",
-        "dependencies": null,
-        "milestone": {
-          "path": "Aspirations/Milestones/Graybox the website.md",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "Get the presentation layer working",
-        "id": "Aspirations/Tasks/Get the presentation layer working.md",
+        "name": "Film links",
+        "id": "Aspirations/Tasks/Film links.md",
         "type": "task",
         "status": "planned",
+        "duration": 2,
         "dependencies": null,
         "milestone": {
-          "path": "Aspirations/Milestones/Obsidian data in and out.md",
+          "path": "Aspirations/Milestones/Content and information setup.md",
           "embed": false,
           "type": "file"
         }
       },
       {
-        "name": "Import Discord messages",
-        "id": "Aspirations/Tasks/Import Discord messages.md",
+        "name": "Footer mock",
+        "id": "Aspirations/Tasks/Footer mock.md",
         "type": "task",
         "status": "backlog",
+        "duration": 3,
         "dependencies": null,
         "milestone": {
-          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "path": "Aspirations/Milestones/Content and information setup.md",
           "embed": false,
           "type": "file"
         }
@@ -346,6 +323,7 @@
         "id": "Aspirations/Tasks/Get intake into daily notes.md",
         "type": "task",
         "status": "backlog",
+        "duration": 2,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Intake system.md",
@@ -354,37 +332,59 @@
         }
       },
       {
-        "name": "Import Telegram",
-        "id": "Aspirations/Tasks/Import Telegram.md",
+        "name": "Get Mux up and running with my CMS",
+        "id": "Aspirations/Tasks/Get Mux up and running with my CMS.md",
         "type": "task",
         "status": "backlog",
-        "dependencies": null,
+        "duration": 5,
+        "dependencies": [
+          {
+            "path": "Aspirations/Tasks/Get video running on homepage from CMS.md",
+            "embed": false,
+            "type": "file"
+          }
+        ],
         "milestone": {
-          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "path": "Aspirations/Milestones/Video setup.md",
           "embed": false,
           "type": "file"
         }
       },
       {
-        "name": "Import Maps data",
-        "id": "Aspirations/Tasks/Import Maps data.md",
+        "name": "Get the presentation layer working",
+        "id": "Aspirations/Tasks/Get the presentation layer working.md",
         "type": "task",
-        "status": "backlog",
+        "status": "planned",
+        "duration": 2,
         "dependencies": null,
         "milestone": {
-          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "path": "Aspirations/Milestones/Obsidian data in and out.md",
           "embed": false,
           "type": "file"
         }
       },
       {
-        "name": "Import YouTube history",
-        "id": "Aspirations/Tasks/Import YouTube history.md",
+        "name": "Get Vercel data in, including self-review",
+        "id": "Aspirations/Tasks/Get Vercel data in, including self-review.md",
         "type": "task",
         "status": "backlog",
-        "dependencies": null,
+        "duration": 6,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "display": "Get all data into Obsidian",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
+        "name": "Get video running on homepage from CMS",
+        "id": "Aspirations/Tasks/Get video running on homepage from CMS.md",
+        "type": "task",
+        "status": "backlog",
+        "duration": 2,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Video setup.md",
           "embed": false,
           "type": "file"
         }
@@ -394,6 +394,20 @@
         "id": "Aspirations/Tasks/Import books.md",
         "type": "task",
         "status": "backlog",
+        "duration": 6,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
+        "name": "Import Discord messages",
+        "id": "Aspirations/Tasks/Import Discord messages.md",
+        "type": "task",
+        "status": "backlog",
+        "duration": 3,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -406,6 +420,7 @@
         "id": "Aspirations/Tasks/Import emails.md",
         "type": "task",
         "status": "backlog",
+        "duration": 5,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -418,6 +433,7 @@
         "id": "Aspirations/Tasks/Import financial data.md",
         "type": "task",
         "status": "backlog",
+        "duration": 3,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -430,6 +446,7 @@
         "id": "Aspirations/Tasks/Import games.md",
         "type": "task",
         "status": "backlog",
+        "duration": 5,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -438,21 +455,24 @@
         }
       },
       {
-        "name": "Learn how to use templates in Obsidian",
-        "id": "Aspirations/Tasks/Learn how to use templates in Obsidian.md",
-        "type": "task"
-      },
-      {
-        "name": "Learn more about SEO",
-        "id": "Aspirations/Tasks/Learn more about SEO.md",
+        "name": "Import Maps data",
+        "id": "Aspirations/Tasks/Import Maps data.md",
         "type": "task",
-        "status": "backlog"
+        "status": "backlog",
+        "duration": 5,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "embed": false,
+          "type": "file"
+        }
       },
       {
         "name": "Import movies and shows",
         "id": "Aspirations/Tasks/Import movies and shows.md",
         "type": "task",
         "status": "backlog",
+        "duration": 5,
         "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
@@ -461,29 +481,116 @@
         }
       },
       {
-        "name": "Make a book inventory",
-        "id": "Aspirations/Tasks/Make a book inventory.md",
+        "name": "Import Telegram",
+        "id": "Aspirations/Tasks/Import Telegram.md",
         "type": "task",
+        "status": "backlog",
+        "duration": 2,
+        "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
-          "display": "Get all data into Obsidian",
           "embed": false,
           "type": "file"
         }
       },
       {
+        "name": "Import YouTube history",
+        "id": "Aspirations/Tasks/Import YouTube history.md",
+        "type": "task",
+        "status": "backlog",
+        "duration": 4,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Get all data into Obsidian.md",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
+        "name": "Learn more about SEO",
+        "id": "Aspirations/Tasks/Learn more about SEO.md",
+        "type": "task",
+        "status": "raw",
+        "duration": 5,
+        "milestone": null
+      },
+      {
         "name": "Make a comprehensive Raycast AI presets and prompts collection",
         "id": "Aspirations/Tasks/Make a comprehensive Raycast AI presets and prompts collection.md",
         "type": "task",
-        "status": "backlog"
+        "status": "raw",
+        "duration": 5,
+        "milestone": null
+      },
+      {
+        "name": "Make an alphabet bank",
+        "id": "Aspirations/Tasks/Make an alphabet bank.md",
+        "type": "task",
+        "status": "on-deck",
+        "duration": 9,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Arabic alphabet and basic phonetics.md",
+          "embed": false,
+          "type": "file"
+        }
       },
       {
         "name": "Make inventory of my physical stuff",
         "id": "Aspirations/Tasks/Make inventory of my physical stuff.md",
         "type": "task",
+        "status": "backlog",
+        "duration": 5,
+        "dependencies": null,
         "milestone": {
           "path": "Aspirations/Milestones/Get all data into Obsidian.md",
-          "display": "Get all data into Obsidian",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
+        "name": "OG info",
+        "id": "Aspirations/Tasks/OG info.md",
+        "type": "task",
+        "status": "backlog",
+        "duration": 4,
+        "dependencies": null,
+        "milestone": {
+          "path": "Aspirations/Milestones/Content and information setup.md",
+          "embed": false,
+          "type": "file"
+        }
+      },
+      {
+        "name": "Review with Shorouk that all info is present",
+        "id": "Aspirations/Tasks/Review with Shorouk that all info is present.md",
+        "type": "task",
+        "status": "backlog",
+        "duration": 1,
+        "dependencies": [
+          {
+            "path": "Aspirations/Tasks/OG info.md",
+            "embed": false,
+            "type": "file"
+          },
+          {
+            "path": "Aspirations/Tasks/About page.md",
+            "embed": false,
+            "type": "file"
+          },
+          {
+            "path": "Aspirations/Tasks/Footer mock.md",
+            "embed": false,
+            "type": "file"
+          },
+          {
+            "path": "Aspirations/Tasks/Film links.md",
+            "embed": false,
+            "type": "file"
+          }
+        ],
+        "milestone": {
+          "path": "Aspirations/Milestones/Content and information setup.md",
           "embed": false,
           "type": "file"
         }
@@ -493,41 +600,19 @@
         "id": "Aspirations/Tasks/Set up a little Obsidian learning center for Egyptian.md",
         "type": "task",
         "status": "backlog",
+        "duration": 1.5,
         "dependencies": null,
         "milestone": null
       },
       {
-        "name": "Template out the about page",
-        "id": "Aspirations/Tasks/Template out the about page.md",
+        "name": "Vimeo and YouTube embeds for trailers",
+        "id": "Aspirations/Tasks/Vimeo and YouTube embeds for trailers.md",
         "type": "task",
-        "status": "in-flight",
+        "status": "backlog",
+        "duration": 2,
         "dependencies": null,
         "milestone": {
-          "path": "Aspirations/Milestones/Graybox the website.md",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "Make an alphabet bank",
-        "id": "Aspirations/Tasks/Make an alphabet bank.md",
-        "type": "task",
-        "status": "on-deck",
-        "dependencies": null,
-        "milestone": {
-          "path": "Aspirations/Milestones/Arabic alphabet and basic phonetics.md",
-          "embed": false,
-          "type": "file"
-        }
-      },
-      {
-        "name": "Template out a projects section below the reel",
-        "id": "Aspirations/Tasks/Template out a projects section below the reel.md",
-        "type": "task",
-        "status": "in-flight",
-        "dependencies": null,
-        "milestone": {
-          "path": "Aspirations/Milestones/Graybox the website.md",
+          "path": "Aspirations/Milestones/Video setup.md",
           "embed": false,
           "type": "file"
         }
@@ -560,6 +645,6 @@
       "prettyRenderInlineFieldsInLivePreview": true,
       "dataviewJsKeyword": "dataviewjs"
     },
-    "length": 24
+    "length": 26
   }
 }

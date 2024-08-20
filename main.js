@@ -464,7 +464,7 @@ function convertProject(obsidianProject) {
     id: obsidianProject.id,
     name: obsidianProject.name,
     deadline,
-    deadlineType: obsidianProject.deadlineType,
+    deadlineType: obsidianProject.deadlineType || void 0,
     excitement: ensureValidExcitement(obsidianProject.excitement),
     viability: ensureValidViability(obsidianProject.viability),
     status: ensureValidStatus(obsidianProject.status),

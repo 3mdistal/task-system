@@ -59,43 +59,42 @@ export interface ObsidianTaskItem extends ObsidianListItem {
 }
 
 export interface ObsidianGoal {
+  name: string;
+  id: string;
   type: "goal";
   status: string;
-  id: string;
-  name: string;
 }
 
 export interface ObsidianProject {
+  name: string;
+  id: string;
   type: "project";
   status: string;
-  deadline?: string;
-  deadlineType?: "soft" | "hard";
+  deadline?: string | null;
+  deadlineType?: "soft" | "hard" | null;
   excitement?: number;
   viability?: number;
-  goal?: ObsidianLink;
-  id: string;
-  name: string;
+  goal?: ObsidianLink | null;
 }
 
 export interface ObsidianMilestone {
+  name: string;
+  id: string;
   type: "milestone";
   status: string;
+  dependencies?: ObsidianLink[] | null;
   project: ObsidianLink;
-  dependencies?: ObsidianLink[];
-  id: string;
-  name: string;
 }
 
 export interface ObsidianTask {
+  name: string;
+  id: string;
   type: "task";
   status: string;
-  milestone?: ObsidianLink;
   duration?: number;
+  dependencies?: ObsidianLink[] | null;
+  milestone?: ObsidianLink | null;
   timeSpent?: number;
-  dependencies?: ObsidianLink[];
-  created?: string;
-  id: string;
-  name: string;
 }
 
 export interface ObsidianDataViewResult<T> {

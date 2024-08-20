@@ -373,6 +373,7 @@ function ensureValidReference(referenceId, collection, entityType, parentType, p
 // src/utils/obsidian/obsidianDataConverter.ts
 function convertObsidianData(data) {
   var _a, _b, _c, _d;
+  console.log(data);
   const goals = (((_a = data.goals) == null ? void 0 : _a.values) || []).map(convertGoal);
   const projects = (((_b = data.projects) == null ? void 0 : _b.values) || []).map(convertProject);
   const milestones = (((_c = data.milestones) == null ? void 0 : _c.values) || []).map(
@@ -481,7 +482,7 @@ function convertTask(obsidianTask) {
     completionDate: void 0,
     dependencyIds: ((_a = obsidianTask.dependencies) == null ? void 0 : _a.map((dep) => dep.path || "")) || [],
     duration: obsidianTask.duration || 0,
-    timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
+    timeSpent: obsidianTask.timeSpent || 0,
     milestoneId: ((_b = obsidianTask.milestone) == null ? void 0 : _b.path) || void 0
   };
 }

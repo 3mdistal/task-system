@@ -19,6 +19,7 @@ export function convertObsidianData(data: ObsidianDataViewData): {
   milestones: Milestone[];
   tasks: Task[];
 } {
+  console.log(data);
   const goals: Goal[] = (data.goals?.values || []).map(convertGoal);
   const projects: Project[] = (data.projects?.values || []).map(convertProject);
   const milestones: Milestone[] = (data.milestones?.values || []).map(
@@ -133,7 +134,7 @@ function convertTask(obsidianTask: ObsidianTask): Task {
     dependencyIds:
       obsidianTask.dependencies?.map((dep) => dep.path || "") || [],
     duration: obsidianTask.duration || 0,
-    timeSpent: obsidianTask.timeSpent || obsidianTask.timespent || 0,
+    timeSpent: obsidianTask.timeSpent || 0,
     milestoneId: obsidianTask.milestone?.path || undefined,
   };
 }

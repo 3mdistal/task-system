@@ -92,7 +92,6 @@ export interface ObsidianTask {
   milestone?: ObsidianLink;
   duration?: number;
   timeSpent?: number;
-  timespent?: number;
   dependencies?: ObsidianLink[];
   created?: string;
   id: string;

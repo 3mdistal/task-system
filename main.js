@@ -187,67 +187,6 @@ var isProjectCompleted = (project, completedTasks, milestones, goals) => {
   );
 };
 
-// src/utils/projectUtils.ts
-function checkDeadlineStatus(completedTasks, projects) {
-  const missedHardDeadlines = [];
-  const missedSoftDeadlines = [];
-  projects.forEach((project) => {
-    if (project.deadline) {
-      const projectTasks = completedTasks.filter(
-        (task) => task.milestoneId && project.milestoneIds.includes(task.milestoneId)
-      );
-      const lastTaskCompletionDate = Math.max(
-        ...projectTasks.map((task) => {
-          var _a;
-          return ((_a = task.completionDate) == null ? void 0 : _a.getTime()) || 0;
-        })
-      );
-      if (lastTaskCompletionDate > project.deadline.getTime()) {
-        if (project.deadlineType === "hard") {
-          missedHardDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        } else {
-          missedSoftDeadlines.push(
-            `${project.name}: ${project.deadline.toISOString()}`
-          );
-        }
-      }
-    }
-  });
-  return {
-    allHardDeadlinesMet: missedHardDeadlines.length === 0,
-    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
-    missedHardDeadlines,
-    missedSoftDeadlines
-  };
-}
-function calculateCrunchInfo(projects, endDate) {
-  const crunchByProject = {};
-  let totalCrunch = 0;
-  let projectsWithDeadlines = 0;
-  projects.forEach((project) => {
-    if (project.deadline) {
-      const crunch = Math.max(
-        Math.min(getDaysUntilDeadline(project, endDate), 3650),
-        -3650
-      );
-      crunchByProject[project.name] = crunch;
-      totalCrunch += crunch;
-      projectsWithDeadlines++;
-    }
-  });
-  const earliestCrunch = projectsWithDeadlines > 0 ? Math.min(...Object.values(crunchByProject)) : 0;
-  const latestCrunch = projectsWithDeadlines > 0 ? Math.max(...Object.values(crunchByProject)) : 0;
-  const averageCrunch = projectsWithDeadlines > 0 ? totalCrunch / projectsWithDeadlines : 0;
-  return {
-    earliestCrunch,
-    latestCrunch,
-    averageCrunch,
-    crunchByProject
-  };
-}
-
 // src/services/optimizationService.ts
 var optimizeSequence = (projects, goals, milestones, tasks) => {
   const allTasks = getAllTasksFromProjects(projects, milestones, tasks);
@@ -557,6 +496,67 @@ function convertTask(obsidianTask) {
     duration: obsidianTask.duration || 0,
     timeSpent: obsidianTask.timeSpent || 0,
     milestoneId: ((_b = obsidianTask.milestone) == null ? void 0 : _b.path) || void 0
+  };
+}
+
+// src/utils/projectUtils.ts
+function checkDeadlineStatus(completedTasks, projects) {
+  const missedHardDeadlines = [];
+  const missedSoftDeadlines = [];
+  projects.forEach((project) => {
+    if (project.deadline) {
+      const projectTasks = completedTasks.filter(
+        (task) => task.milestoneId && project.milestoneIds.includes(task.milestoneId)
+      );
+      const lastTaskCompletionDate = Math.max(
+        ...projectTasks.map((task) => {
+          var _a;
+          return ((_a = task.completionDate) == null ? void 0 : _a.getTime()) || 0;
+        })
+      );
+      if (lastTaskCompletionDate > project.deadline.getTime()) {
+        if (project.deadlineType === "hard") {
+          missedHardDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        } else {
+          missedSoftDeadlines.push(
+            `${project.name}: ${project.deadline.toISOString()}`
+          );
+        }
+      }
+    }
+  });
+  return {
+    allHardDeadlinesMet: missedHardDeadlines.length === 0,
+    allSoftDeadlinesMet: missedSoftDeadlines.length === 0,
+    missedHardDeadlines,
+    missedSoftDeadlines
+  };
+}
+function calculateCrunchInfo(projects, endDate) {
+  const crunchByProject = {};
+  let totalCrunch = 0;
+  let projectsWithDeadlines = 0;
+  projects.forEach((project) => {
+    if (project.deadline) {
+      const crunch = Math.max(
+        Math.min(getDaysUntilDeadline(project, endDate), 3650),
+        -3650
+      );
+      crunchByProject[project.name] = crunch;
+      totalCrunch += crunch;
+      projectsWithDeadlines++;
+    }
+  });
+  const earliestCrunch = projectsWithDeadlines > 0 ? Math.min(...Object.values(crunchByProject)) : 0;
+  const latestCrunch = projectsWithDeadlines > 0 ? Math.max(...Object.values(crunchByProject)) : 0;
+  const averageCrunch = projectsWithDeadlines > 0 ? totalCrunch / projectsWithDeadlines : 0;
+  return {
+    earliestCrunch,
+    latestCrunch,
+    averageCrunch,
+    crunchByProject
   };
 }
 

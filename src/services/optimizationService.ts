@@ -1,6 +1,6 @@
 import { Project, Task, Goal, Milestone } from "../types";
 import { simulateTaskSequence } from "./simulationService";
-import { checkDeadlineStatus, getProjectDeadline } from "../utils/projectUtils";
+import { checkDeadlineStatus } from "../utils/projectUtils";
 
 export interface SimulationResult {
   score: number;

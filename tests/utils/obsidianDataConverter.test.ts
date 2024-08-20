@@ -6,7 +6,10 @@ import {
   isMilestone,
   isTask,
 } from "../../src/utils/typeGuards";
-import { ObsidianDataViewData } from "../../src/types/Obsidian";
+import {
+  ObsidianDataViewData,
+  ObsidianProject,
+} from "../../src/types/Obsidian";
 import {
   ensureValidStatus,
   ensureValidExcitement,
@@ -147,6 +150,102 @@ describe("obsidianDataConverter", () => {
         expect(linkedMilestone).toBeDefined();
         expect(linkedMilestone!.taskIds).toContain(task.id);
       }
+    });
+  });
+
+  describe("date handling for project deadlines", () => {
+    test("converts valid date strings to Date objects", () => {
+      const testData: Partial<ObsidianDataViewData> = {
+        projects: {
+          values: [
+            {
+              id: "project1",
+              name: "Project 1",
+              type: "project",
+              status: "planned",
+              deadline: "2023-12-31",
+            } as ObsidianProject,
+          ],
+          settings: {},
+          length: 1,
+        },
+      };
+      const result = convertObsidianData(testData as ObsidianDataViewData);
+      expect(result.projects[0].deadline).toBeInstanceOf(Date);
+      expect(result.projects[0].deadline?.toISOString()).toBe(
+        "2023-12-31T00:00:00.000Z"
+      );
+    });
+
+    test("handles invalid date strings", () => {
+      const testData: Partial<ObsidianDataViewData> = {
+        projects: {
+          values: [
+            {
+              id: "project1",
+              name: "Project 1",
+              type: "project",
+              status: "planned",
+              deadline: "invalid-date",
+            } as ObsidianProject,
+          ],
+          settings: {},
+          length: 1,
+        },
+      };
+      const result = convertObsidianData(testData as ObsidianDataViewData);
+      expect(result.projects[0].deadline).toBeUndefined();
+    });
+
+    test("handles missing deadline", () => {
+      const testData: Partial<ObsidianDataViewData> = {
+        projects: {
+          values: [
+            {
+              id: "project1",
+              name: "Project 1",
+              type: "project",
+              status: "planned",
+            } as ObsidianProject,
+          ],
+          settings: {},
+          length: 1,
+        },
+      };
+      const result = convertObsidianData(testData as ObsidianDataViewData);
+      expect(result.projects[0].deadline).toBeUndefined();
+    });
+
+    test("handles different date formats", () => {
+      const testData: Partial<ObsidianDataViewData> = {
+        projects: {
+          values: [
+            {
+              id: "project1",
+              name: "Project 1",
+              type: "project",
+              status: "planned",
+              deadline: "2023-12-31T23:59:59.999Z",
+            } as ObsidianProject,
+            {
+              id: "project2",
+              name: "Project 2",
+              type: "project",
+              status: "planned",
+              deadline: "2023-06-15 14:30:00",
+            } as ObsidianProject,
+          ],
+          settings: {},
+          length: 2,
+        },
+      };
+      const result = convertObsidianData(testData as ObsidianDataViewData);
+      expect(result.projects[0].deadline?.toISOString()).toBe(
+        "2023-12-31T23:59:59.999Z"
+      );
+      expect(result.projects[1].deadline?.toISOString()).toBe(
+        "2023-06-15T14:30:00.000Z"
+      );
     });
   });
 });

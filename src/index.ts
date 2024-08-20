@@ -4,6 +4,7 @@ import { simulateTaskSequence } from "./services/simulationService";
 import { convertObsidianData } from "./utils/obsidian/obsidianDataConverter";
 import { checkDeadlineStatus } from "./utils/projectUtils";
 import { calculateCrunchInfo } from "./utils/projectUtils";
+import { logger } from "./utils/logger";
 
 export function optimizeTasks(
   rawData: ObsidianDataViewData,
@@ -16,7 +17,7 @@ export function optimizeTasks(
   const result = simulate(bestSequence, projects, goals, milestones);
 
   if (!result || !result.completedTasks || !result.endDate) {
-    console.error("Invalid simulation result:", result);
+    logger.error("Invalid simulation result:", result);
     return createEmptyOptimizationResult();
   }
 
@@ -30,7 +31,6 @@ export function optimizeTasks(
     crunchInfo,
   };
 
-  logOptimizationResult(optimizationResult);
   checkDeadlines(deadlineStatus);
 
   return optimizationResult;
@@ -59,10 +59,6 @@ function createEmptyOptimizationResult(): OptimizationResult {
   };
 }
 
-function logOptimizationResult(result: OptimizationResult): void {
-  console.log("Optimization Result:", JSON.stringify(result, null, 2));
-}
-
 function checkDeadlines(
   deadlineStatus: OptimizationResult["deadlineStatus"]
 ): void {
@@ -70,7 +66,7 @@ function checkDeadlines(
     !deadlineStatus.allHardDeadlinesMet ||
     !deadlineStatus.allSoftDeadlinesMet
   ) {
-    console.error(
+    logger.error(
       "ERROR: Not all deadlines are met. Task rescheduling may be necessary."
     );
   }

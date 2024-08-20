@@ -135,67 +135,6 @@ const generateAlternatingSequence = (
   return sequence;
 };
 
-const tryOptimizationStrategies = (
-  allTasks: Task[],
-  strategies: OptimizationStrategy[],
-  projects: Project[],
-  goals: Goal[],
-  milestones: Milestone[]
-): SimulationResult => {
-  let bestResult: SimulationResult = {
-    score: -Infinity,
-    completedTasks: [],
-    endDate: new Date(),
-  };
-
-  for (const strategy of strategies) {
-    const alternatingSequence = generateAlternatingSequence(
-      allTasks,
-      strategy.items,
-      strategy.getItemId
-    );
-    const result = simulateTaskSequence(
-      alternatingSequence,
-      projects,
-      goals,
-      milestones
-    );
-
-    const deadlineStatus = checkDeadlineStatus(result.completedTasks, projects);
-
-    if (
-      deadlineStatus.allHardDeadlinesMet &&
-      (result.score > bestResult.score ||
-        !checkDeadlineStatus(bestResult.completedTasks, projects)
-          .allHardDeadlinesMet)
-    ) {
-      bestResult = result;
-    } else if (
-      deadlineStatus.allHardDeadlinesMet ===
-        checkDeadlineStatus(bestResult.completedTasks, projects)
-          .allHardDeadlinesMet &&
-      (result.score > bestResult.score ||
-        (result.score === bestResult.score &&
-          countProjectChanges(result.completedTasks) >
-            countProjectChanges(bestResult.completedTasks)))
-    ) {
-      bestResult = result;
-    }
-  }
-
-  return bestResult;
-};
-
-const countProjectChanges = (sequence: Task[]): number => {
-  let changes = 0;
-  for (let i = 1; i < sequence.length; i++) {
-    if (sequence[i].milestoneId !== sequence[i - 1].milestoneId) {
-      changes++;
-    }
-  }
-  return changes;
-};
-
 interface OptimizationStrategy {
   name: string;
   items: Set<string>;
